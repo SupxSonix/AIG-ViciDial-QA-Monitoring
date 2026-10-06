@@ -24,3 +24,5 @@ Unreviewed XFER only hides transfers with a saved review label. Review next open
 The open recording list checks its source every 120 seconds while the tab is visible. Refresh now checks immediately without reloading the page. Refresh preserves playback, filters, sort and pagination, pauses during note editing/saving, and keeps the last successful list on errors. The daily roster also refreshes. Counts reflect recordings actually available from the recording endpoint; source processing delays cannot be removed. Transfers use blue and unreviewed transfers use amber.
 
 Not sure saves [QA: not sure] for further review, with purple tags and a separate total and filter. Auto/Manual controls scheduled checks; Refresh now works in either mode. Mode defaults to Auto when the page opens.
+
+The agent dropdown shows names only; its roster summary does not supply QA transfer totals. Actual transfer counts remain based on the selected agent recording list. Refresh interval choices are 30 seconds, 1, 2, 5 or 10 minutes, with 2 minutes as the default. Changing the interval restarts the schedule; Manual mode stops it.
