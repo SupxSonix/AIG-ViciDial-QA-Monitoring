@@ -38,3 +38,5 @@ Review features:
 Reporting is available on the separate /reports page (or /qa/reports behind the Apache prefix). Select a report date and any combination of agents, or use Generate individually. Invalid and Not sure are included by default and listed before Valid. Also include Valid adds valid customers and recording URLs; unreviewed calls are excluded from reports. Reports and progress fetch only the selected agents sequentially.
 
 Agent activity is available at /activity (or /qa/activity behind Apache). Select an agent and date to read ViciDial user_stats.php. Call time and login-session totals are kept separate from summed activity categories. Pause codes remain as recorded until their labels are confirmed; LOGIN and uncoded pauses are not assumed to be breaks. Reports reaching the 10,000 activity-row limit show an incomplete-totals warning. Activity loads on demand without background polling.
+
+Total billable hours follows the payroll rule: activity talk + wait + disposition (wrap-up) seconds. All pause codes are excluded. It uses the selected day and the activity-row limit warning applies to this total.
