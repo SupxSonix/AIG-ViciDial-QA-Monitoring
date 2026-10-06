@@ -22,7 +22,7 @@ try{
  assert.equal((await sendNote({...note,lead:'10000&status=QA'})).status,400);
  assert.equal((await sendNote({...note,audio:'https://other.example/x.mp3'})).status,400);
  assert.equal(calls.length,2);
- const saved=await sendNote(note);assert.equal(saved.status,200);assert.deepEqual(await saved.json(),{saved:true});assert.equal(calls.length,3);assert.equal(calls[2].pathname,'/admin/updateQA.php');assert.deepEqual(Object.fromEntries(calls[2].searchParams),{lead_id:'10000',user:'lnacional',location:'',filename:'20261006-005400_3144231652',searchdate:'2026-10-05',notes:note.notes});
+ const saved=await sendNote(note);assert.equal(saved.status,200);assert.equal((await saved.json()).saved,true);assert.equal(calls.length,3);assert.equal(calls[2].pathname,'/admin/updateQA.php');assert.deepEqual(Object.fromEntries(calls[2].searchParams),{lead_id:'10000',user:'lnacional',location:'',filename:'20261006-005400_3144231652',searchdate:'2026-10-05',notes:note.notes});
  saveMode='reject';assert.equal((await sendNote(note)).status,401);
  saveMode='unknown';assert.equal((await (await sendNote(note)).json()).saved,false);
  assert.equal(calls.filter(c=>c.pathname.includes('agentRecordings')).length,1);
