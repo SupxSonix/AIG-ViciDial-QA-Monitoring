@@ -9,6 +9,12 @@
     "test": "node test.mjs && node filter-test.mjs && node agent-test.mjs && node session-test.mjs"
   },
   "devDependencies": {
-    "miniflare": "^4.20260730.0"
+    "miniflare": "4.20260730.0"
+  },
+  "overrides": {
+    "miniflare": {
+      "sharp": "0.35.5",
+      "undici": "7.29.1"
+    }
   }
 }
