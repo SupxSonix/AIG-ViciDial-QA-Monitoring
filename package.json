@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node build.mjs",
     "dev": "node preview.mjs",
-    "test": "node test.mjs && node filter-test.mjs && node agent-test.mjs && node session-test.mjs"
+    "test": "node test.mjs && node filter-test.mjs && node agent-test.mjs && node session-test.mjs && node queue-test.mjs"
   },
   "devDependencies": {
     "miniflare": "4.20260730.0"
@@ -18,3 +18,4 @@
     }
   }
 }
+
