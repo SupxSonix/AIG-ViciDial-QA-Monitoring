@@ -4,3 +4,5 @@ function selectRecordings(records,query='',status='',sort='original',review='all
 function transferCounts(records){const counts={total:0,valid:0,invalid:0,unreviewed:0};for(const r of records)if(String(r.status).toUpperCase()==='XFER'){counts.total++;counts[noteVerdict(r.notes)]++;}return counts;}
 
 function setNoteVerdict(notes,verdict){if(!['valid','invalid'].includes(verdict))throw new Error('Choose valid or invalid.');const body=String(notes||'').replace(/^\s*\[QA:\s*(?:valid|invalid|unreviewed)\]\s*\n?/i,'');return '[QA: '+verdict+']'+(body?'\n'+body:'');}
+
+function mergeRecordingRefresh(current,incoming){const previous=new Map(current.map(record=>[record.lead+'|'+record.audio,record]));return incoming.map(record=>{const existing=previous.get(record.lead+'|'+record.audio);if(existing){Object.assign(existing,record);return existing;}return record;});}

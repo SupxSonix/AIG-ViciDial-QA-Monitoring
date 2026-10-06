@@ -1,0 +1,14 @@
+import {readFileSync} from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+const source=readFileSync('app.js','utf8');const refresh=source.slice(source.indexOf('async function refreshRecordings()'),source.indexOf('setInterval(refreshRecordings,30000)'));
+const original={lead:'1',audio:'/one.mp3',status:'XFER',notes:'',time:'10:00 AM'};
+const context={agent:'test',date:'2026-10-07'};const elements={'load':{disabled:false},'sync-status':{textContent:''},'date':{value:context.date},'agent-picker':{disabled:true},'recording-notes':{}};
+let requestCount=0,filterCount=0,resolveFetch;let next=[{...original,notes:'valid'},{lead:'2',audio:'/two.mp3',status:'XFER',notes:''}];let fail=false;
+const state={refreshing:false,authorization:true,loadedContext:context,document:{hidden:false},editing:null,savingNotes:false,loadSequence:1,noteRevision:0,recordings:[original],playing:original,agentsDate:'',URLSearchParams,AbortSignal,Date,JSON,Array,Error,Map,$:id=>elements[id],message(){},updateStatuses(){},filter(reset){assert.equal(reset,false);filterCount++;},renderNote(){},fetch:async()=>{requestCount++;if(resolveFetch)return await new Promise(resolve=>{resolveFetch=resolve;});if(fail)throw new Error('offline');return {ok:true,json:async()=>({recordings:next})};}};
+vm.createContext(state);vm.runInContext(readFileSync('recording-utils.js','utf8')+'\n'+refresh,state);
+await state.refreshRecordings();assert.equal(state.recordings.length,2);assert.equal(state.recordings[0],original);assert.equal(state.playing.notes,'valid');assert.equal(filterCount,1);assert.match(elements["sync-status"].textContent,/Recordings updated/);
+await state.refreshRecordings();assert.equal(filterCount,1,'unchanged lists do not rerender');
+state.editing=original;await state.refreshRecordings();assert.equal(requestCount,2,'editing pauses refresh');state.editing=null;
+fail=true;await state.refreshRecordings();assert.equal(state.recordings.length,2);assert.match(elements['sync-status'].textContent,/Retrying/);fail=false;
+resolveFetch=true;const pending=state.refreshRecordings();state.noteRevision++;original.notes='[QA: invalid]';resolveFetch({ok:true,json:async()=>({recordings:[{...original,notes:''}]})});await pending;assert.equal(original.notes,'[QA: invalid]','a save during fetch rejects stale data');resolveFetch=null;
+resolveFetch=true;const stale=state.refreshRecordings();state.loadSequence++;state.loadedContext={agent:'other',date:context.date};resolveFetch({ok:true,json:async()=>({recordings:[]})});await stale;assert.equal(state.recordings.length,2,'agent change rejects stale list');
+console.log('PASS: background refresh, stable playback identity, unchanged list, edit pause, failed refresh, save race and stale agent response.');
