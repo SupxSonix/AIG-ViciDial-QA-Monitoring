@@ -1,6 +1,6 @@
 # AIG - ViciDial QA Monitoring
 
-Private Sites viewer for MyVici. Load agent and date, browse 50 recordings per page, and play one selected MP3. Audio is never fetched while loading the list. Credentials are entered by the user and retained only in tab memory, sent via an HTTP header to the server, and forwarded only to `https://myvici.info`. No shared credentials are embedded in source or saved in browser storage.
+Private Sites viewer for MyVici. Load agent and date, browse 50 recordings per page, and play one selected MP3. Audio is never fetched while loading the list. Credentials are verified with ViciDial at sign-in and held only in server memory for an eight-hour session. The browser receives an opaque HttpOnly, SameSite=Strict cookie; no password is saved in browser storage. Refresh restores the session automatically. Sign-out, expiration, or an app restart requires signing in again. HTTPS proxy deployments should forward X-Forwarded-Proto: https and preserve the Host header.
 
 The server retrieves the existing HTML and extracts recording metadata. Initial list loading still depends on the existing PHP endpoint and its database. This viewer fixes the audio preload and browser rendering overhead; it cannot speed up the original database query.
 
@@ -17,4 +17,5 @@ The Worker is emitted at `dist/server/index.js`. This source repository does not
 Status filtering (including XFER and TB), earliest/latest time sorting, and daily XFER counts run locally without a list reload. Notes containing the whole word valid count as valid; invalid or not valid takes priority. Counts include all loaded XFER rows and refresh after a confirmed note save.
 
 Review agent loads the agent roster for the selected date from AgentDailyStatusSummary.php with user=QWE. Agents are deduplicated by their recording-link username, with the maximum reported daily XFER total retained for duplicate links. Selecting an agent loads only that agent's recordings. Changing the date refreshes the roster; manual usernames remain available if the summary is unavailable.
+
 
