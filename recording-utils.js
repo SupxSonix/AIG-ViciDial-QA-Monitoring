@@ -15,9 +15,9 @@ function csvCell(value){let text=String(value??'');if(/^[\s]*[=+@-]|^[\t\r\n]/.t
 function reviewReport(agents,date,format='csv',scope='all'){
  const label=v=>v==='unsure'?'Not sure':v==='unreviewed'?'Unreviewed':v==='invalid'?'Invalid':'Valid';
  const rows=[['Date','Agent username','Agent name','Customer name','Lead ID','Time','Call status','QA status','Invalid reason','Notes','Recording URL']];
- for(const a of agents)for(const r of a.recordings){if(String(r.status).toUpperCase()!=='XFER')continue;const verdict=noteVerdict(r.notes);if(scope==='followup'&&!['invalid','unsure'].includes(verdict))continue;rows.push([date,a.username,a.name,r.customer,r.lead,r.time,r.status,label(verdict),invalidReason(r.notes),r.notes,recordingLink(r)]);}
+ for(const a of agents)for(const r of [...a.recordings].sort((x,y)=>({invalid:0,unsure:1,valid:2,unreviewed:3}[noteVerdict(x.notes)]-({invalid:0,unsure:1,valid:2,unreviewed:3}[noteVerdict(y.notes)])))){if(String(r.status).toUpperCase()!=='XFER')continue;const verdict=noteVerdict(r.notes);if(scope==='followup'&&!['invalid','unsure'].includes(verdict))continue;if(scope==='followup-valid'&&!['invalid','unsure','valid'].includes(verdict))continue;rows.push([date,a.username,a.name,r.customer,r.lead,r.time,r.status,label(verdict),invalidReason(r.notes),r.notes,recordingLink(r)]);}
  if(format==='csv')return '\uFEFF'+rows.map(row=>row.map(csvCell).join(',')).join('\r\n');
- const lines=['AIG ViciDial QA review report','Date: '+date,'Generated: '+new Date().toLocaleString(),'Scope: '+(scope==='followup'?'Invalid and Not sure':'All XFER calls'),''];
+ const lines=['AIG ViciDial QA review report','Date: '+date,'Generated: '+new Date().toLocaleString(),'Scope: '+(scope==='followup'?'Invalid and Not sure':scope==='followup-valid'?'Invalid and Not sure, plus Valid':'All XFER calls'),''];
  for(const a of agents){const c=transferCounts(a.recordings);lines.push(a.name+' ('+a.username+')', 'Transfers: '+c.total+' | Valid: '+c.valid+' | Invalid: '+c.invalid+' | Not sure: '+c.unsure+' | Unreviewed: '+c.unreviewed,'');for(const row of rows.slice(1).filter(row=>row[1]===a.username)){lines.push('Customer: '+row[3]+' | Lead: '+row[4]+' | Time: '+row[5]+' | '+row[7],...(row[8]?['Reason: '+row[8]]:[]),'Notes: '+(row[9]||'—'),'Recording: '+row[10],'');}}
  return lines.join('\n');
 }
