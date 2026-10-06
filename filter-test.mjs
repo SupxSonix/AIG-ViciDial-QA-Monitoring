@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import vm from 'node:vm';
+const context=vm.createContext({});vm.runInContext(readFileSync(new URL('./recording-utils.js',import.meta.url),'utf8'),context);
+const rows=[{status:'XFER',time:'12:00 AM',notes:'VALID',lead:'1'},{status:'XFER',time:'12:00 PM',notes:'invalid, previously valid',lead:'2'},{status:'TB',time:'9:15 AM',notes:'valid',lead:'3'},{status:'XFER',time:'1:00 PM',notes:'Callback needed',lead:'4'},{status:'XFER',time:'11:59 PM',notes:'not valid',lead:'5'},{status:'XFER',time:'unknown',notes:'validation pending',lead:'6'}];
+assert.deepEqual(JSON.parse(JSON.stringify(context.transferCounts(rows))),{total:5,valid:1,invalid:2,unreviewed:2});
+assert.deepEqual(Array.from(context.selectRecordings(rows,'','XFER','earliest'),r=>r.lead),['1','2','4','5','6']);
+assert.deepEqual(Array.from(context.selectRecordings(rows,'','XFER','latest'),r=>r.lead),['5','4','2','1','6']);
+assert.deepEqual(Array.from(context.selectRecordings(rows,'valid','TB','earliest'),r=>r.lead),['3']);
+assert.equal(rows[0].lead,'1');rows[3].notes='Valid transfer';assert.equal(context.transferCounts(rows).valid,2);
+assert.equal(context.transferCounts(Array.from({length:1114},()=>({status:'XFER',notes:'valid'}))).valid,1114);
+assert.equal(context.timeValue('12:30:45 PM'),45045);assert.equal(context.timeValue('25:00'),null);
+console.log('PASS: status/search filters, midnight/noon sorting, invalid priority, saved-note counts, and all 1,114 rows counted.');

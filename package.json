@@ -1,0 +1,14 @@
+{
+  "name": "recordings-fast",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node preview.mjs",
+    "test": "node test.mjs && node filter-test.mjs && node agent-test.mjs"
+  },
+  "devDependencies": {
+    "miniflare": "^4.20260730.0"
+  }
+}

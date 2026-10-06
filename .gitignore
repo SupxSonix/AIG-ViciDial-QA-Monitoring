@@ -1,0 +1,8 @@
+node_modules/
+.sites-runtime/
+.wrangler/
+.env*
+*.log
+
+dist/
+.openai/
