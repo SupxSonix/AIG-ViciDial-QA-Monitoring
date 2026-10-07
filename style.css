@@ -80,3 +80,4 @@ header{min-height:48px;padding:8px 20px}.brand{gap:9px;font-size:1rem}.logo{padd
  #payslip .professional-table th{font-size:11px}
  #payslip .professional-table td,#payslip .professional-table th{padding:5px 3px}
 }
+#pay-rules fieldset{display:flex;gap:12px;margin:8px 0;border:1px solid #d2e1ee;border-radius:6px;padding:9px}#pay-rules label{flex-direction:row;align-items:center;gap:5px;min-width:0}#pay-rules input{width:auto;min-height:0}#pay-rules summary{cursor:pointer;font-size:12px}#pay-rules{max-width:500px}
