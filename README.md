@@ -28,7 +28,7 @@ Not sure saves [QA: not sure] for further review, with purple tags and a separat
 The agent dropdown shows names only; its roster summary does not supply QA transfer totals. Actual transfer counts remain based on the selected agent recording list. Refresh interval choices are 30 seconds, 1, 2, 5 or 10 minutes, with 2 minutes as the default. Changing the interval restarts the schedule; Manual mode stops it.
 
 Review features:
-- Invalid reasons: Wrong transfer, Customer not interested, Disconnected call, Duplicate transfer/recording, or Other. Reasons and optional context are saved in the existing ViciDial note field.
+- Invalid reasons: Wrong transfer, Customer not interested, Customer did not say yes, Customer did not agree to transfer, Muffled response; transfer consent not clarified, No customer response / silence, Transfer purpose not explained, Transfer failed / not completed, Disconnected call, Duplicate transfer/recording, Other. Reasons and optional context are saved in the existing ViciDial note field.
 - Selected-agent or all-agent CSV/text reports for the loaded recording date; include all XFER calls or just Invalid/Not sure. Reports include agent name, customer name, lead, notes, reason and recording URL. Links require normal ViciDial access. A report preview and download link remain available. All-agent reports and progress are loaded one agent at a time on demand, without downloading audio. Failed agent requests stop report generation instead of silently producing an incomplete report.
 - Team progress uses actual recording lists. The reviewed percentage counts Valid and Invalid; Not sure remains pending.
 - Playback speed and skip back/forward 10 seconds use the existing player.

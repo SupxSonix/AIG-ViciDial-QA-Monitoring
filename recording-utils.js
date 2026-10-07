@@ -7,7 +7,7 @@ function setNoteVerdict(notes,verdict){if(!['valid','invalid','unsure'].includes
 
 function mergeRecordingRefresh(current,incoming){const previous=new Map(current.map(record=>[record.lead+'|'+record.audio,record]));return incoming.map(record=>{const existing=previous.get(record.lead+'|'+record.audio);if(existing){Object.assign(existing,record);return existing;}return record;});}
 
-const INVALID_REASONS=['Wrong transfer','Customer not interested','Disconnected call','Duplicate transfer/recording','Other'];
+const INVALID_REASONS=["Wrong transfer","Customer not interested","Customer did not say yes","Customer did not agree to transfer","Muffled response; transfer consent not clarified","No customer response / silence","Transfer purpose not explained","Transfer failed / not completed","Disconnected call","Duplicate transfer/recording","Other"];
 function invalidReason(notes){return String(notes||'').match(/^Reason: (.+)$/m)?.[1]||'';}
 function setInvalidReason(notes,reason){if(reason&&!INVALID_REASONS.includes(reason))throw new Error('Choose an invalid reason.');let text=setNoteVerdict(notes,'invalid').replace(/^Reason: .*\n?/m,'');return reason?text.replace(/^(\[QA: invalid\])/, '$1\nReason: '+reason):text;}
 function reportNotes(notes){return String(notes||'').replace(/^\s*\[QA:\s*(?:valid|invalid|not sure|unreviewed)\]\s*\n?/i,'').replace(/^Reason: [^\r\n]*(?:\r?\n|$)/m,'').trim();}
