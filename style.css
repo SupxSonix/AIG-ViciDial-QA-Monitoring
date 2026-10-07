@@ -70,3 +70,13 @@ header{min-height:48px;padding:8px 20px}.brand{gap:9px;font-size:1rem}.logo{padd
 #payslip table.professional-table{table-layout:auto;font-size:12px}#payslip .professional-table th{width:auto;font-size:11px}#payslip .professional-table td,#payslip .professional-table th{padding:6px 4px}
 @media print{#payslip table.professional-table{font-size:10px}#payslip .professional-table th{font-size:9px}#payslip .professional-table td,#payslip .professional-table th{padding:4px 3px}}
 #payslip .professional-table th:nth-child(n){width:auto}
+/* Professional payslips prioritize readable text over dense breakdown spacing. */
+#payslip table.professional-table{font-size:14px}
+#payslip .professional-table th{font-size:13px}
+#payslip .professional-table td,#payslip .professional-table th{padding:8px 5px}
+#payslip .professional-table td:nth-child(16){white-space:normal}
+@media print{
+ #payslip table.professional-table{font-size:12px}
+ #payslip .professional-table th{font-size:11px}
+ #payslip .professional-table td,#payslip .professional-table th{padding:5px 3px}
+}
