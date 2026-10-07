@@ -7,7 +7,9 @@ import {Miniflare,Response as WorkerResponse} from 'miniflare';
 const outboundService=async request=>{
  const url=new URL(request.url);
  if(url.origin!=='https://myvici.info')return new WorkerResponse('Destination blocked',{status:403});
- const response=await fetch(url,{method:request.method,headers:Object.fromEntries(request.headers),redirect:'manual',signal:AbortSignal.timeout(60000)});
+ const forwardedHeaders=new Headers(request.headers);forwardedHeaders.delete('Content-Length');
+ const body=['GET','HEAD'].includes(request.method)?undefined:await request.arrayBuffer();
+ const response=await fetch(url,{method:request.method,headers:Object.fromEntries(forwardedHeaders),body,redirect:'manual',signal:AbortSignal.timeout(60000)});
  const headers=new Headers(response.headers);
  // Node fetch has already decompressed the upstream body.
  headers.delete('Content-Encoding');headers.delete('Content-Length');headers.delete('Transfer-Encoding');
