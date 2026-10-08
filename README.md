@@ -48,3 +48,24 @@ Payroll lunch minimum defaults to 60 minutes and is editable (0–240). Worked d
 Additional unpaid-break adjustments can be entered per day with an optional reason for missed logout or unapproved extra time. Recorded breaks remain untouched and already excluded. Manual minutes reduce billable time after the lunch shortfall; excessive deductions block saving/printing. Adjustments and reasons are included in saved snapshots and printed payslips.
 
 Live supervision is available at /live (/qa/live behind Apache). Enter your own configured supervisor phone extension; it is remembered per ViciDial username in browser storage. Listen and Whisper forward the existing blind_monitor function to non_agent_api.php through the authenticated server session. The server reads AST_timeonVDADall.php and rechecks the target session before commands. Refresh defaults to 10 seconds while visible; Manual, 20, 30 and 60 seconds are available. No monitoring request is sent automatically. Answer/use the supervisor phone for audio and hang up that phone to end monitoring. An accepted request does not prove audio connected. Other supervisors and monitoring started elsewhere are not tracked or locked. This feature does not provision extensions or embed a webphone. Live calls were not used for automated validation.
+
+## Login security with Cloudflare Turnstile
+
+Turnstile is required by default. Public site key: `0x4AAAAAAEkUwlNfuu-QzxQZ`. Configure the Managed widget for `agent.phdirectory.net`. Tokens are checked server-side before credentials, including hostname and action `login`. Existing valid sessions remain usable. Missing secret or verification outages block new logins.
+
+On Armbian, create `/etc/vicidial-qa.env` using `sudoedit` and set:
+
+```ini
+TURNSTILE_SECRET_KEY=YOUR_PRIVATE_SECRET
+TURNSTILE_HOSTNAME=agent.phdirectory.net
+TURNSTILE_ENABLED=true
+```
+
+Replace the placeholder privately with the widget Secret Key. Do not commit this file. Run `sudo chmod 600 /etc/vicidial-qa.env`. Use `sudo systemctl edit vicidial-qa` to add:
+
+```ini
+[Service]
+EnvironmentFile=/etc/vicidial-qa.env
+```
+
+Then run `sudo systemctl daemon-reload` and `sudo systemctl restart vicidial-qa`. A service restart requires signing in again. Worker deployments need the same secret binding and hostname. The site key can be overridden with `TURNSTILE_SITE_KEY`. `TURNSTILE_ENABLED=false` disables protection explicitly; it is used only by unrelated mocked tests and is not the default. The dedicated Turnstile test checks security failures and successful login without external services. Real widget behavior must be checked after deployment on the configured domain.
