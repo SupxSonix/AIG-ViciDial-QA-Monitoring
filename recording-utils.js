@@ -10,6 +10,8 @@ function mergeRecordingRefresh(current,incoming){const previous=new Map(current.
 const INVALID_REASONS=["Wrong transfer","Customer not interested","Customer did not say yes","Customer did not agree to transfer","Muffled response; transfer consent not clarified","No customer response / silence","Transfer purpose not explained","Transfer failed / not completed","Disconnected call","Duplicate transfer/recording","Other"];
 function invalidReason(notes){return String(notes||'').match(/^Reason: (.+)$/m)?.[1]||'';}
 function setInvalidReason(notes,reason){if(reason&&!INVALID_REASONS.includes(reason))throw new Error('Choose an invalid reason.');let text=setNoteVerdict(notes,'invalid').replace(/^Reason: .*\n?/m,'');return reason?text.replace(/^(\[QA: invalid\])/, '$1\nReason: '+reason):text;}
+const UNSURE_REASONS=['Customer response unclear','Transfer consent unclear','Audio unclear / incomplete','Transfer completion unclear','Needs a second review','Other'];
+function setUnsureReason(notes,reason){if(reason&&!UNSURE_REASONS.includes(reason))throw new Error('Choose a Not sure reason.');let text=setNoteVerdict(notes,'unsure').replace(/^Reason: [^\r\n]*(?:\r?\n|$)/m,'');return reason?text.replace(/^(\[QA: not sure\])/, '$1\nReason: '+reason):text;}
 function reportNotes(notes){return String(notes||'').replace(/^\s*\[QA:\s*(?:valid|invalid|not sure|unreviewed)\]\s*\n?/i,'').replace(/^Reason: [^\r\n]*(?:\r?\n|$)/m,'').trim();}
 function recordingLink(record){return /^\/RECORDINGS\/MP3\/[A-Za-z0-9_.-]+\.mp3$/.test(record.audio||'')&&!record.audio.includes('..')?'https://myvici.info'+record.audio:'';}
 function csvCell(value){let text=String(value??'');if(/^[\s]*[=+@-]|^[\t\r\n]/.test(text))text="'"+text;return '"'+text.replaceAll('"','""')+'"';}
