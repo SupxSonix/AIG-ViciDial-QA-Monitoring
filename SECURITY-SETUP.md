@@ -28,4 +28,4 @@ For unattended access without an active administrator, a future trusted role-dir
 
 Application fixes do not configure Cloudflare rate limits/WAF, host updates, backup protection, or origin firewall rules. Review those separately. Authentication and note security tests use synthetic records; confirm deployment behavior with authorized test accounts before using production payouts.
 
-Role verification now reads `/vicidial/admin.php?ADD=0` and matches the exact username row to its Level column. It does not open or modify the user-edit page; a level-8 administrator who can view the Users list can verify other level-8 accounts. Missing/ambiguous rows and unreadable levels fail closed.
+Role verification now reads `/vicidial/admin.php?ADD=0A` and matches the exact username row to its Level column. It does not open or modify the user-edit page; a level-8 administrator who can view the Users list can verify other level-8 accounts. Missing/ambiguous rows and unreadable levels fail closed.

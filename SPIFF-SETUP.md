@@ -39,4 +39,4 @@ Weekly generation runs as a background job in the Node/Miniflare service and rep
 
 Security update: current supervisor levels are rechecked within 60 seconds using the active administrator session. If the administrator session is unavailable after expiry or restart, spiff access pauses until the administrator signs in again. See SECURITY-SETUP.md for the verification and HTTPS deployment requirements.
 
-Role verification now reads `/vicidial/admin.php?ADD=0` and matches the exact username row to its Level column. It does not open or modify the user-edit page; a level-8 administrator who can view the Users list can verify other level-8 accounts. Missing/ambiguous rows and unreadable levels fail closed.
+Role verification now reads `/vicidial/admin.php?ADD=0A` and matches the exact username row to its Level column. It does not open or modify the user-edit page; a level-8 administrator who can view the Users list can verify other level-8 accounts. Missing/ambiguous rows and unreadable levels fail closed.
