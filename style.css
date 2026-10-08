@@ -101,3 +101,5 @@ header{min-height:48px;padding:8px 20px}.brand{gap:9px;font-size:1rem}.logo{padd
 #notes-dialog{width:min(620px,calc(100vw - 32px));max-height:calc(100dvh - 32px);padding:20px;overflow-y:auto;scrollbar-width:thin}#notes-dialog .notes-heading{margin-bottom:12px}#notes-dialog #notes-detail{margin:6px 0 10px}#notes-dialog #verdict-controls{margin:12px 0}#notes-dialog #notes-text{display:block;box-sizing:border-box;height:104px;min-height:88px;max-height:28dvh;margin-top:6px;padding:10px 12px;font-size:.875rem;line-height:1.5;resize:vertical}#notes-dialog #notes-status{min-height:0;margin:8px 0;font-size:.8rem}#notes-dialog #notes-status:empty{display:none}#notes-dialog #review-history{margin:12px 0}#notes-dialog .notes-actions{margin-top:14px;padding-top:12px;border-top:1px solid #e4ebf1;gap:10px}@media(max-height:650px){#notes-dialog{padding:16px}#notes-dialog #notes-text{height:88px;min-height:72px}#notes-dialog #verdict-controls{margin:10px 0}}
 
 #supervisor-webphone.phone-collapsed{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);border:0;margin:0;pointer-events:none}
+
+#live-rows td:nth-child(8){min-width:72px;white-space:nowrap}
