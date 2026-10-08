@@ -79,7 +79,15 @@ function parseSupervisorWebphone(html,phone){
  const logins=url.searchParams.getAll('phone_login');if(!logins.length||logins.some(login=>{try{return (/^\d+$/.test(login)?login:atob(login))!==phone;}catch{return true;}}))throw Error('Phone mismatch');
  return url.href;
 }
+function configuredSupervisorPhone(html){
+ const frame=[...html.matchAll(/<iframe\b[^>]*>/gi)].find(match=>/\bid\s*=\s*["']?webphone(?:["'\s>])/i.test(match[0]));
+ const source=frame?.[0].match(/\bsrc\s*=\s*(["'])([\s\S]*?)\1/i)?.[2];if(!source)throw Error('No configured phone');
+ const url=new URL(decode(source),ORIGIN),raw=url.searchParams.get('phone_login')||'';const phone=/^\d{1,20}$/.test(raw)?raw:atob(raw);
+ if(!/^\d{1,20}$/.test(phone))throw Error('Invalid phone');parseSupervisorWebphone(html,phone);return phone;
+}
 async function webphoneEndpoint(request,session){
+ if(request.method==='GET'){const result=await upstream('/vicidial/realtime_report.php',session.auth,'text/html');if(result.error)return result.error;try{return json({phone:configuredSupervisorPhone(await readLimited(result.response,3000000))});}catch{return json({phone:null});}}
+
  if(request.method!=='POST')return json({error:'Use POST to connect your supervisor phone.'},405);
  if(!(request.headers.get('Content-Type')||'').startsWith('application/json'))return json({error:'Send phone details as JSON.'},415);
  const raw=await request.text();if(raw.length>500)return json({error:'Invalid phone details.'},400);let data;try{data=JSON.parse(raw);}catch{return json({error:'Invalid phone details.'},400);}
