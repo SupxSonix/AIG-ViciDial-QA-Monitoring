@@ -82,3 +82,11 @@ header{min-height:48px;padding:8px 20px}.brand{gap:9px;font-size:1rem}.logo{padd
 }
 #pay-rules fieldset{display:flex;gap:12px;margin:8px 0;border:1px solid #d2e1ee;border-radius:6px;padding:9px}#pay-rules label{flex-direction:row;align-items:center;gap:5px;min-width:0}#pay-rules input{width:auto;min-height:0}#pay-rules summary{cursor:pointer;font-size:12px}#pay-rules{max-width:500px}
 #live-rows td:nth-child(3){min-width:0;white-space:nowrap}#live-rows td:last-child{display:flex;gap:6px}#live-rows td:nth-child(4){font-weight:650;color:#236b4b}#live-page .filters label{width:200px}
+/* Keep the security check aligned with the account fields and primary action. */
+.login-screen #login{min-width:0}
+#turnstile-widget{width:100%;min-height:65px;display:flex;justify-content:center;align-items:center;margin:2px 0 18px;line-height:0}
+#turnstile-widget>div{width:100%}
+#retry-verification{width:100%;margin:0 0 14px;font-size:.8rem}
+.login-screen #login-status:not(:empty){margin:0 0 16px;padding:10px 12px;background:#f5f8fb;border:1px solid #e1e8ef;border-radius:6px;line-height:1.5}
+.login-screen #sign-in{margin:0}
+@media(max-width:380px){.login-screen #login{padding:20px}#turnstile-widget{min-height:140px}#turnstile-widget>div{width:auto}}
