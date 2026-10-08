@@ -90,3 +90,5 @@ header{min-height:48px;padding:8px 20px}.brand{gap:9px;font-size:1rem}.logo{padd
 .login-screen #login-status:not(:empty){margin:0 0 16px;padding:10px 12px;background:#f5f8fb;border:1px solid #e1e8ef;border-radius:6px;line-height:1.5}
 .login-screen #sign-in{margin:0}
 @media(max-width:380px){.login-screen #login{padding:20px}#turnstile-widget{min-height:140px}#turnstile-widget>div{width:auto}}
+
+#live-rows td:nth-child(8){min-width:160px;white-space:normal}#live-rows td:nth-child(9){min-width:210px;white-space:pre-line;font-size:.75rem;color:#58718a}#live-page th:nth-child(9){white-space:normal}

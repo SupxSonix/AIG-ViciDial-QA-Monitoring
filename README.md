@@ -69,3 +69,5 @@ EnvironmentFile=/etc/vicidial-qa.env
 ```
 
 Then run `sudo systemctl daemon-reload` and `sudo systemctl restart vicidial-qa`. A service restart requires signing in again. Worker deployments need the same secret binding and hostname. The site key can be overridden with `TURNSTILE_SITE_KEY`. `TURNSTILE_ENABLED=false` disables protection explicitly; it is used only by unrelated mocked tests and is not the default. The dedicated Turnstile test checks security failures and successful login without external services. Real widget behavior must be checked after deployment on the configured domain.
+
+Live roster requests now enable CUSTINFOdisplay. Customer names are displayed only from recognized customer columns in the upstream report; missing values display a dash. Last accepted requests list the latest accepted request per currently signed-in supervisor session, including extension, mode and timestamp. They clear on sign-out/session expiry/service restart and do not prove audio connectivity or track actions made outside this app. Multiple supervisors can appear for the same agent; no exclusive Whisper lock is applied.
