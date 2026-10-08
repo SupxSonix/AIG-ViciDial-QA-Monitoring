@@ -18,7 +18,7 @@ Check externally: http://agent.phdirectory.net/qa/ should redirect; HTTPS login 
 
 ## Spiff role verification
 
-Selected accounts' current levels 7–9 are now rechecked with a maximum 60-second cache. To support level-7 supervisors without permission to read the ViciDial user-admin page, this check uses the spiff administrator's active app session held in server memory. The administrator must sign in again after a service restart or session expiry. If no administrator session is available when verification is due, spiff access fails closed with a clear message. No extra password is stored on disk or published.
+Selected accounts' current levels 7–9 are now rechecked with a maximum 60-second cache. To support level-7 supervisors without permission to read the ViciDial Users list, this check uses the spiff administrator's active app session held in server memory. The administrator must sign in again after a service restart or session expiry. If no administrator session is available when verification is due, spiff access fails closed with a clear message. No extra password is stored on disk or published.
 
 The configured administrator is checked too. Removing an account from Supervisor access takes effect on the next spiff request; re-saving access clears cached role checks. A ViciDial level downgrade takes effect when the current role cache expires, at most 60 seconds later. This restricts spiff access, not the user's other ViciDial permissions or existing audio calls.
 
@@ -27,3 +27,5 @@ For unattended access without an active administrator, a future trusted role-dir
 ## Remaining operational checks
 
 Application fixes do not configure Cloudflare rate limits/WAF, host updates, backup protection, or origin firewall rules. Review those separately. Authentication and note security tests use synthetic records; confirm deployment behavior with authorized test accounts before using production payouts.
+
+Role verification now reads `/vicidial/admin.php?ADD=0` and matches the exact username row to its Level column. It does not open or modify the user-edit page; a level-8 administrator who can view the Users list can verify other level-8 accounts. Missing/ambiguous rows and unreadable levels fail closed.

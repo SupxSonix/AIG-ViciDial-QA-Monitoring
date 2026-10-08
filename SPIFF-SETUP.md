@@ -1,6 +1,6 @@
 # Spiff setup
 
-Spiffs use the same app login and private server-side storage. They are shared only with supervisors selected by the configured administrator. Access grants verify ViciDial levels 7–9 using the read-only user account page. The administrator must be able to view that account page. If ViciDial does not confirm the account and level, access is refused.
+Spiffs use the same app login and private server-side storage. They are shared only with supervisors selected by the configured administrator. Access grants verify ViciDial levels 7–9 using the read-only Users list. The administrator must be able to view the Users list. If ViciDial does not confirm the account and level, access is refused.
 
 Add the following to the existing service environment file, replacing the username with the initial administrator's exact ViciDial username:
 
@@ -38,3 +38,5 @@ Recording dates and times must already follow the HQ Eastern clock. The UI uses 
 Weekly generation runs as a background job in the Node/Miniflare service and reports progress through the signed-in session. Reports are fetched sequentially. If the browser disconnects, refresh saved weeks before retrying; a calculation may have completed. Restarting the service ends in-progress jobs but retains completed snapshots and payments.
 
 Security update: current supervisor levels are rechecked within 60 seconds using the active administrator session. If the administrator session is unavailable after expiry or restart, spiff access pauses until the administrator signs in again. See SECURITY-SETUP.md for the verification and HTTPS deployment requirements.
+
+Role verification now reads `/vicidial/admin.php?ADD=0` and matches the exact username row to its Level column. It does not open or modify the user-edit page; a level-8 administrator who can view the Users list can verify other level-8 accounts. Missing/ambiguous rows and unreadable levels fail closed.
