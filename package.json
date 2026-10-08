@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node build.mjs",
     "dev": "node preview.mjs",
-    "test": "node test.mjs && node filter-test.mjs && node agent-test.mjs && node session-test.mjs && node queue-test.mjs && node auto-refresh-test.mjs && node report-test.mjs && node history-test.mjs && node activity-test.mjs && node payroll-test.mjs && node payslip-storage-test.mjs && node live-test.mjs && node preview-test.mjs && node turnstile-test.mjs && node team-summary-test.mjs && node live-webphone-test.mjs && node phone-only-stop-test.mjs && node live-qa-supplement-test.mjs && node activity-roster-test.mjs && node spiff-test.mjs && node spiff-api-test.mjs"
+    "test": "node test.mjs && node filter-test.mjs && node agent-test.mjs && node session-test.mjs && node queue-test.mjs && node auto-refresh-test.mjs && node report-test.mjs && node history-test.mjs && node activity-test.mjs && node payroll-test.mjs && node payslip-storage-test.mjs && node live-test.mjs && node preview-test.mjs && node turnstile-test.mjs && node team-summary-test.mjs && node live-webphone-test.mjs && node phone-only-stop-test.mjs && node live-qa-supplement-test.mjs && node activity-roster-test.mjs && node spiff-test.mjs && node spiff-api-test.mjs && node security-test.mjs"
   },
   "devDependencies": {
     "miniflare": "4.20260730.0"

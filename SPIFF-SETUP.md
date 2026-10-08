@@ -8,7 +8,7 @@ Add the following to the existing service environment file, replacing the userna
 SPIFF_ADMIN=your_vicidial_username
 ```
 
-Restart `vicidial-qa`. The administrator can then open **Spiffs → Supervisor access → Choose supervisors by name**, select accounts, and save. Level 7–9 is checked when access is granted; re-save the list after account level changes, or remove access immediately.
+Restart `vicidial-qa`. The administrator can then open **Spiffs → Supervisor access → Choose supervisors by name**, select accounts, and save. Level 7–9 is checked when access is granted and rechecked within 60 seconds during use. The administrator must have an active app session for selected supervisor verification; remove access immediately if needed.
 
 Storage defaults to `storage/spiffs/spiffs.json` relative to the app's working directory. Set `QA_SPIFF_DIR` to use another private persistent directory. Back up this directory along with existing payroll/review storage; never commit it to Git. The service account must be able to write it. Single Node service instance only: writes are serialized in-process, not across independent app processes.
 
@@ -36,3 +36,5 @@ Editing daily rules does not automatically change a saved week. Unpaid weeks can
 Recording dates and times must already follow the HQ Eastern clock. The UI uses `America/New_York` for current dates and payment dates, accounting for DST. Historical ViciDial wall times are never converted through the browser timezone. Verify the deployment clock and access page format before using the result for payouts.
 
 Weekly generation runs as a background job in the Node/Miniflare service and reports progress through the signed-in session. Reports are fetched sequentially. If the browser disconnects, refresh saved weeks before retrying; a calculation may have completed. Restarting the service ends in-progress jobs but retains completed snapshots and payments.
+
+Security update: current supervisor levels are rechecked within 60 seconds using the active administrator session. If the administrator session is unavailable after expiry or restart, spiff access pauses until the administrator signs in again. See SECURITY-SETUP.md for the verification and HTTPS deployment requirements.

@@ -1,8 +1,11 @@
+import {createHash} from 'node:crypto';
 import {readFileSync,mkdirSync,writeFileSync} from 'node:fs';
 mkdirSync('dist/server',{recursive:true});
 const html=readFileSync('index.html','utf8');
-const js=readFileSync('recording-utils.js','utf8')+'\n'+readFileSync('team-utils.js','utf8')+'\n'+readFileSync('app.js','utf8')+'\n'+readFileSync('team.js','utf8')+'\n'+readFileSync('spiff-utils.mjs','utf8').replace(/^export /gm,'')+'\n'+readFileSync('spiff.js','utf8');
+let js=readFileSync('recording-utils.js','utf8')+'\n'+readFileSync('team-utils.js','utf8')+'\n'+readFileSync('app.js','utf8')+'\n'+readFileSync('team.js','utf8')+'\n'+readFileSync('spiff-utils.mjs','utf8').replace(/^export /gm,'')+'\n'+readFileSync('spiff.js','utf8');
+js=js.replace(/\r\n?/g,'\n');
 const css=readFileSync('style.css','utf8');
-const page=html.replace('/* APP_STYLE */',css).replace('/* APP_SCRIPT */',js);
-writeFileSync('dist/server/index.js',`const PAGE=${JSON.stringify(page)};\n`+readFileSync('spiff-utils.mjs','utf8').replace(/^export /gm,'')+'\n'+readFileSync('worker.js','utf8'));
+const scriptHash=createHash('sha256').update(js).digest('base64');
+const page=html.replace('/* APP_STYLE */',css).replace('/* APP_SCRIPT */',()=>js);
+writeFileSync('dist/server/index.js',`const SCRIPT_HASH=${JSON.stringify(scriptHash)};\nconst PAGE=${JSON.stringify(page)};\n`+readFileSync('spiff-utils.mjs','utf8').replace(/^export /gm,'')+'\n'+readFileSync('worker.js','utf8'));
 console.log('Built recording viewer: '+Buffer.byteLength(page)+' bytes, one audio player.');

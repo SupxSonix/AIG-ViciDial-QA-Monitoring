@@ -1,0 +1,18 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
+let calls=[],recordings=[{lead:'100',audio:'/RECORDINGS/MP3/example.mp3',notes:'Server baseline'}],history;
+const c=vm.createContext({URL,URLSearchParams,Request,Response,Headers,TextEncoder,TextDecoder,AbortSignal,ReadableStream,crypto,btoa,atob,fetch:async(url)=>{calls.push(new URL(url).pathname);return new Response('Notes saved');}});
+vm.runInContext(fs.readFileSync('dist/server/index.js','utf8').replace('export default {','globalThis.worker={'),c);
+c.parseRecordings=async()=>({recordings});
+const env={REVIEW_HISTORY:{fetch:async(url,init)=>{history=JSON.parse(init.body);return Response.json({ok:true});}}};
+for(const path of ['/api/audio?path=/RECORDINGS/MP3/example.mp3','/api/recordings?u=test&q=2026-10-09','/api/notes']){const response=await c.worker.fetch(new Request('https://audit.invalid'+path,{headers:{'X-Vici-Authorization':'Basic '+btoa('synthetic:synthetic')}}),env);assert.equal(response.status,path==='/api/notes'?405:401);}assert.equal(calls.length,0);assert.equal((await c.worker.fetch(new Request('https://audit.invalid/api/notes',{method:'POST',headers:{'X-Vici-Authorization':'Basic '+btoa('synthetic:synthetic'),'Content-Type':'application/json'},body:'{}'}),env)).status,401);assert.equal(calls.length,0);
+assert.equal((await c.worker.fetch(new Request('http://audit.invalid/api/login',{method:'POST'}),env)).status,403);
+const redirect=await c.worker.fetch(new Request('http://audit.invalid/'),env);assert.equal(redirect.status,308);assert.equal(redirect.headers.get('location'),'https://audit.invalid/');
+assert.match(c.sessionCookie(new Request('https://audit.invalid'),'opaque'),/; Secure/);
+vm.runInContext("sessions.set('test-token',{auth:'Basic synthetic',username:'tester',expires:Date.now()+60000})",c);
+const send=body=>c.worker.fetch(new Request('https://audit.invalid/api/notes',{method:'POST',headers:{Cookie:'vici_qa_session=test-token','Content-Type':'application/json'},body:JSON.stringify(body)}),env);
+const note={lead:'100',audio:'/RECORDINGS/MP3/example.mp3',agent:'test',date:'2026-10-09',notes:'Updated',previousNotes:'Forged baseline'};
+assert.equal((await send(note)).status,200);assert.deepEqual(calls,['/admin/agentRecordingsLessThan30.php','/admin/updateQA.php']);assert.equal(history.previousNotes,'Server baseline');assert.equal(history.previousNotesSource,'upstream-before-save');
+calls=[];recordings=[];assert.equal((await send(note)).status,403);assert.deepEqual(calls,['/admin/agentRecordingsLessThan30.php']);
+const page=await c.worker.fetch(new Request('https://audit.invalid/'),env),html=await page.text(),script=html.match(/<script>([\s\S]*?)<\/script>/)[1];const hash=createHash('sha256').update(script.replace(/\r\n?/g,'\n')).digest('base64');assert.ok(page.headers.get('content-security-policy').includes("'sha256-"+hash+"'"));assert.ok(!page.headers.get('content-security-policy').includes("script-src 'self' 'unsafe-inline'"));assert.match(page.headers.get('content-security-policy'),/frame-ancestors 'self'/);assert.equal(page.headers.get('strict-transport-security'),'max-age=31536000');
+assert.equal((await c.worker.fetch(new Request('https://audit.invalid/api/session',{headers:{Origin:'https://evil.invalid'}}),env)).status,403);
+console.log('PASS: legacy authentication rejected, insecure API blocked, HTTPS redirect, Secure cookies, note ownership before mutation, trusted audit baseline, exact CSP script hash, framing and HSTS.');
