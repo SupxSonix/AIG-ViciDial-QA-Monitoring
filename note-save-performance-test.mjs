@@ -1,0 +1,20 @@
+import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
+let now=Date.now(),calls=[],events=[],mode='ok';const realDate=Date;
+class Clock extends realDate{static now(){return now;}}
+const records=Array.from({length:700},(_,i)=>({lead:String(10000+i),audio:'/RECORDINGS/MP3/example-'+i+'.mp3',notes:'Original '+i}));
+const c=vm.createContext({URL,URLSearchParams,Request,Response,Headers,TextEncoder,TextDecoder,AbortSignal,ReadableStream,crypto,btoa,atob,Date:Clock,fetch:async url=>{const path=new URL(url).pathname;calls.push(path);return new Response(path.includes('updateQA')?(mode==='ok'?'Notes saved':'Receipt only'):'Agent Recordings');}});
+vm.runInContext(fs.readFileSync('dist/server/index.js','utf8').replace('export default {','globalThis.worker={'),c);c.parseRecordings=async()=>({recordings:records});
+vm.runInContext("sessions.set('a',{auth:'Basic synthetic',username:'one',expires:Date.now()+3600000});sessions.set('b',{auth:'Basic synthetic',username:'two',expires:Date.now()+3600000});",c);
+const env={REVIEW_HISTORY:{fetch:async(url,init)=>{events.push(JSON.parse(init.body));return Response.json({ok:true});}}};
+const request=(token,path,body)=>c.worker.fetch(new Request('https://audit.invalid'+path,{method:body?'POST':'GET',headers:{Cookie:'vici_qa_session='+token,...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})}),env);
+const load=token=>request(token,'/api/recordings?u=test&q=2026-10-09');
+const note={lead:'10000',audio:records[0].audio,agent:'test',date:'2026-10-09',notes:'First edit',previousNotes:'Forged'};
+assert.equal((await load('a')).status,200);calls=[];assert.equal((await request('a','/api/notes',note)).status,200);assert.deepEqual(calls,['/admin/updateQA.php']);assert.equal(events.at(-1).previousNotes,'Original 0');assert.equal(events.at(-1).previousNotesSource,'upstream-session-snapshot');assert.ok(events.at(-1).previousNotesVerifiedAt);
+calls=[];await request('a','/api/notes',{...note,notes:'Second edit'});assert.deepEqual(calls,['/admin/updateQA.php']);assert.equal(events.at(-1).previousNotes,'First edit');
+calls=[];await request('b','/api/notes',note);assert.deepEqual(calls,['/admin/agentRecordingsLessThan30.php','/admin/updateQA.php']);
+await load('a');await load('b');await request('a','/api/notes',note);calls=[];await request('b','/api/notes',note);assert.equal(calls[0],'/admin/agentRecordingsLessThan30.php','Other session must reverify after a save');
+await load('a');now+=60001;calls=[];await request('a','/api/notes',note);assert.equal(calls[0],'/admin/agentRecordingsLessThan30.php','Expired snapshot must reverify');
+await load('a');mode='unknown';const count=events.length;assert.equal((await (await request('a','/api/notes',note)).json()).saved,false);assert.equal(events.length,count);mode='ok';calls=[];await request('a','/api/notes',note);assert.equal(calls[0],'/admin/agentRecordingsLessThan30.php','Unconfirmed save invalidates snapshot');
+await load('a');calls=[];assert.equal((await request('a','/api/notes',{...note,lead:'99999'})).status,403);assert.deepEqual(calls,['/admin/agentRecordingsLessThan30.php']);
+await request('a','/api/logout',{});assert.equal((await request('a','/api/notes',note)).status,401);assert.equal(vm.runInContext('noteSnapshots.size',c),0);
+console.log('PASS: 700-call verified snapshot avoids full-list refetch, confirmed notes update trusted baseline, sessions isolate, other saves invalidate, one-minute expiry, unknown saves invalidate, forged recordings reject and logout clears snapshots.');
