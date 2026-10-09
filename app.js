@@ -198,7 +198,7 @@ async function readLiveResponse(response){if(!(response.headers.get('Content-Typ
 
 function resetAgentLanding(){if(teamPage||livePage||activityPage||reportPage)return;$('agent').value='';$('agent-picker').value='';loadedContext=null;$('agent-name').textContent='Agent recordings';const url=new URL(location.href);url.searchParams.delete('u');history.replaceState(null,'',url);for(const [id,path]of [['open-activity','activity'],['open-reports','reports'],['open-team','team']])$(id).href=viewerBase+path+'?'+new URLSearchParams({q:$('date').value});}
 
-function setAccountProfile(username){const name=typeof username==='string'?username:'';$('account-greeting').textContent=name?'Hi, '+name:'Hi';$('account-username').textContent=name;$('account-avatar').textContent=name.slice(0,2).toUpperCase()||'U';if(name)loadProfileSettings(name);else $('app-brand').textContent='AIG / Monitoring System';}
+function setAccountProfile(username){const name=typeof username==='string'?username:'';$('account-greeting').textContent=name?accountGreeting(name):'Welcome';$('account-username').textContent=name;$('account-avatar').textContent=name.slice(0,2).toUpperCase()||'U';$('account-menu-avatar').textContent=name.slice(0,2).toUpperCase()||'U';if(name)loadProfileSettings(name);else $('app-brand').textContent='AIG / Monitoring System';}
 $('nav-recordings').href=viewerBase;
 const currentNav=teamPage?'open-team':livePage?'open-live':payrollPage?'open-payroll':activityPage?'open-activity':reportPage?'open-reports':'nav-recordings';$(currentNav).setAttribute('aria-current','page');
 document.addEventListener('click',event=>{if(!$('account-menu').contains(event.target))$('account-menu').open=false;});
@@ -230,3 +230,6 @@ async function loadProfileSettings(username){try{const configResponse=await fetc
 $('open-profile-settings').onclick=()=>{$('account-menu').open=false;$('profile-settings').showModal();};
 $('close-profile-settings').onclick=()=>$('profile-settings').close();
 $('profile-settings-form').onsubmit=async event=>{event.preventDefault();const username=$('account-username').textContent;$('profile-settings-status').textContent='Saving…';try{const response=await fetch('/api/payslips?preferences=profile',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({appName:$('profile-app-name').value.trim()})}),data=await response.json();if(!response.ok)throw Error(data.error||'Could not save profile.');if($('account-username').textContent!==username)return;$('app-brand').textContent=data.profile.appName;$('profile-settings-status').textContent='Profile saved to your account.';}catch(error){$('profile-settings-status').textContent=error.message;}};
+
+function accountGreeting(username){const hour=new Date().getHours();return (hour<12?'Good morning':hour<18?'Good afternoon':'Good evening')+', '+username;}
+setInterval(()=>{const username=$('account-username').textContent;if(username)$('account-greeting').textContent=accountGreeting(username);},60000);
