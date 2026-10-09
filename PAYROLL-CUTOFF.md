@@ -1,0 +1,7 @@
+Payroll daily cutoff
+
+New activity calculations default to excluding paid time after 18:30 Eastern, using ViciDial's report wall clock. The Payroll rules checkbox controls this setting and saved payslips retain it. Existing saved payslips without this setting retain their previous calculations; reload activity to generate a new cutoff-enabled payslip. Lunch shortfall is off for new settings because recorded Pause time is already excluded; prior explicitly saved settings remain available.
+
+Each day displays its final recorded LOGOUT and the excluded paid duration. Missing logout is shown as Unavailable, never inferred from last activity. Activity timestamps are retained per row with Pause/Wait/Talk/Dispo durations; Dead is not added as another elapsed phase. Fully late rows exclude only enabled paid categories. A row crossing 18:30 with only paid categories excludes the overlapping elapsed duration. A crossing row with mixed paid/unpaid categories is blocked because this report does not expose exact state transition timestamps. Missing timestamps or 10,000-row truncation also block payroll. This cannot automatically certify malformed or overlapping upstream activity records.
+
+ViciDial source reference: https://github.com/inktel/Vicidial/blob/master/www/vicidial/user_stats.php and https://github.com/inktel/Vicidial/blob/master/bin/AST_cleanup_agent_log.pl . State durations normally follow Pause, Wait, Talk, Dispo; this implementation does not guess category order for mixed boundary rows.
