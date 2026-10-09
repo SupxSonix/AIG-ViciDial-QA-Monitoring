@@ -13,7 +13,7 @@ function setInvalidReason(notes,reason){if(reason&&!INVALID_REASONS.includes(rea
 const UNSURE_REASONS=['Customer response unclear','Transfer consent unclear','Audio unclear / incomplete','Transfer completion unclear','Needs a second review','Other'];
 function setUnsureReason(notes,reason){if(reason&&!UNSURE_REASONS.includes(reason))throw new Error('Choose a Not sure reason.');let text=setNoteVerdict(notes,'unsure').replace(/^Reason: [^\r\n]*(?:\r?\n|$)/m,'');return reason?text.replace(/^(\[QA: not sure\])/, '$1\nReason: '+reason):text;}
 function reportNotes(notes){return String(notes||'').replace(/^\s*\[QA:\s*(?:valid|invalid|not sure|unreviewed)\]\s*\n?/i,'').replace(/^Reason: [^\r\n]*(?:\r?\n|$)/m,'').trim();}
-function recordingLink(record){return /^\/RECORDINGS\/MP3\/[A-Za-z0-9_.-]+\.mp3$/.test(record.audio||'')&&!record.audio.includes('..')?'https://myvici.info'+record.audio:'';}
+function recordingLink(record){return /^\/RECORDINGS\/MP3\/[A-Za-z0-9_.-]+\.mp3$/.test(record.audio||'')&&!record.audio.includes('..')?(typeof vicidialOrigin==='string'?vicidialOrigin:'https://myvici.info')+record.audio:'';}
 function csvCell(value){let text=String(value??'');if(/^[\s]*[=+@-]|^[\t\r\n]/.test(text))text="'"+text;return '"'+text.replaceAll('"','""')+'"';}
 function reviewReport(agents,date,format='csv',scope='all'){
  const label=v=>v==='unsure'?'Not sure':v==='unreviewed'?'Unreviewed':v==='invalid'?'Invalid':'Valid';

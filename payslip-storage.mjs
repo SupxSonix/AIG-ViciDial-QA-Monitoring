@@ -2,6 +2,11 @@ import {mkdir,readFile,writeFile,rename,readdir} from 'node:fs/promises';
 import {join} from 'node:path';import {createHash,randomUUID} from 'node:crypto';
 export function createPayslipService(directory,ResponseType=Response){
  let writes=Promise.resolve();return async request=>{const reply=(body,status=200)=>new ResponseType(JSON.stringify(body),{status,headers:{'Content-Type':'application/json'}});try{const url=new URL(request.url),owner=request.headers.get('X-Reviewer');if(!owner)return reply({error:'Missing reviewer.'},401);const root=join(directory,createHash('sha256').update(owner).digest('hex'));const id=url.searchParams.get('id');if(id&&!/^[a-f0-9-]{36}$/.test(id))return reply({error:'Invalid payslip ID.'},400);
+ if(url.searchParams.get('preferences')==='profile'){
+ const profileRoot=join(directory,createHash('sha256').update(owner.toLowerCase()).digest('hex'),'preferences'),path=join(profileRoot,'profile.json');
+ if(request.method==='GET'){await writes.catch(()=>{});try{return reply({profile:JSON.parse(await readFile(path,'utf8'))});}catch(e){if(e.code==='ENOENT')return reply({profile:null});throw e;}}
+ if(request.method==='POST'){const raw=await request.text();if(raw.length>2000)return reply({error:'Profile is too large.'},413);const data=JSON.parse(raw);if(typeof data?.appName!=='string'||data.appName.trim().length<1||data.appName.trim().length>80)return reply({error:'Enter an app name of 1–80 characters.'},400);const profile={appName:data.appName.trim()};const task=writes.catch(()=>{}).then(async()=>{await mkdir(profileRoot,{recursive:true,mode:0o700});const temp=path+'.'+randomUUID()+'.tmp';await writeFile(temp,JSON.stringify(profile),{mode:0o600});await rename(temp,path);});writes=task;await task;return reply({profile});}return reply({error:'Method not allowed.'},405);
+ }
  if(url.searchParams.get('preferences')==='layout'){
  const layoutRoot=join(directory,createHash('sha256').update(owner.toLowerCase()).digest('hex'),'preferences'),path=join(layoutRoot,'payroll-layout.json');
  if(request.method==='GET'){await writes.catch(()=>{});try{return reply({layout:JSON.parse(await readFile(path,'utf8'))});}catch(e){if(e.code==='ENOENT')return reply({layout:null});throw e;}}

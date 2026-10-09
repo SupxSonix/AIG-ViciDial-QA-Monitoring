@@ -123,3 +123,5 @@ body.activity-mode .payroll-only{display:none!important}.pay-shift-schedule{grid
 .payroll-audit{margin-top:24px;border-top:1px solid #dce5ee;padding-top:18px}.payroll-audit summary{cursor:pointer;font-weight:600}
 
 #payslip thead th[draggable]{cursor:grab}#payslip thead th[draggable]:active{cursor:grabbing}#payslip thead th:focus-visible{outline:2px solid #087d88;outline-offset:-2px}#pay-columns label{display:flex;align-items:center;gap:6px}.column-move{padding:3px 7px;min-height:26px;font-size:12px}@media print{#payslip thead th[draggable]{cursor:default}}
+
+#profile-settings{max-width:520px;width:calc(100% - 40px);border:1px solid #d4dfe9;border-radius:12px;padding:24px}#profile-settings::backdrop{background:#11254080}#profile-settings label{display:block;margin:16px 0}#profile-settings input{width:100%}#profile-settings button{margin-right:10px}
