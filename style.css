@@ -121,3 +121,5 @@ header{gap:24px;flex-wrap:wrap;padding:14px 3vw}.brand{font-size:1rem;flex-shrin
 body.activity-mode .payroll-only{display:none!important}.pay-shift-schedule{grid-column:1/-1;border:1px solid #dce5ee;border-radius:8px;padding:12px}.pay-shift-schedule summary{cursor:pointer;font-weight:600}#pay-shift-dates{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:12px}.payroll-mode #activity-metrics{margin-top:24px}
 
 .payroll-audit{margin-top:24px;border-top:1px solid #dce5ee;padding-top:18px}.payroll-audit summary{cursor:pointer;font-weight:600}
+
+#payslip thead th[draggable]{cursor:grab}#payslip thead th[draggable]:active{cursor:grabbing}#payslip thead th:focus-visible{outline:2px solid #087d88;outline-offset:-2px}#pay-columns label{display:flex;align-items:center;gap:6px}.column-move{padding:3px 7px;min-height:26px;font-size:12px}@media print{#payslip thead th[draggable]{cursor:default}}
