@@ -48,3 +48,5 @@ Selected-agent recalculation updates only selected agents in an unpaid week. Oth
 Daily rules are displayed one date at a time in a week calendar. Previous/Next move seven days; the date picker jumps to any date. This limits visible rows without deleting history. Saving a rule displays its date.
 
 Retention: there is no automatic 30-day deletion or automatic backup schedule in this service. The live JSON contains all rules, weeks, payments and audit revisions. Backups are separate copies and do not affect app response size. Keep financial/audit history, archive older closed weeks through a future explicit archive workflow, and paginate server reads as volume grows. Never delete unpaid weeks to improve performance.
+
+Spiff roster and recording calculations fetch at most two reports concurrently. Saved agent names appear immediately; the weekly roster fills progressively and reports incomplete loads. Calculate always fetches fresh QA notes and saves only after all applicable reports succeed. Minimize agents hides the picker without clearing selections.
