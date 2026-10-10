@@ -14,3 +14,5 @@ Changing the Monitoring System website domain is separate: DNS, HTTPS proxy/cert
 This integration assumes the current ViciDial paths, report formats, custom /admin QA pages, and recordings paths exist on the replacement domain. The trusted crm.usa-benefitsgroup.com browser-phone host is configured separately in code and CSP; it does not migrate automatically. A stock ViciDial installation without the custom QA pages is not interchangeable without further work.
 
 Profile names are stored under private QA_PAYSLIP_DIR account preferences/profile.json; include that storage in backups. No passwords are stored in profile settings.
+
+The signed-out page header, intro name and sign-in footer all use APP_NAME from the server environment. Set APP_NAME in /etc/vicidial-qa.env and restart the service to change the public name for all visitors. Personal profile names apply after sign-in; signing out restores the public name.
