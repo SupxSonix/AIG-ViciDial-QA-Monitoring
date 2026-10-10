@@ -135,3 +135,5 @@ body.activity-mode .payroll-only{display:none!important}.pay-shift-schedule{grid
 .payroll-day-status{display:block;margin-top:5px;padding:3px 7px;min-height:27px;width:auto;max-width:140px;font-size:.75rem;color:#52667d;border-color:#d5dfe9;background:#f5f8fb}.payroll-day-status-print{display:none}@media print{.payroll-day-status{display:none!important}.payroll-day-status-print{display:inline;font-size:.75rem;color:#52667d}}
 
 #manager-review{margin:16px 0;border-top:1px solid #e4ebf1;padding-top:12px}#manager-review button{margin:8px 8px 0 0}#manager-link-result label{margin-top:12px}#manager-link-result input{font-size:.8rem}.manager-response{padding:12px;margin-top:12px;border:1px solid #dce5ee;border-radius:8px;background:#f5f8fb}.manager-response p{white-space:pre-wrap;font-size:.85rem}
+
+button.team-card{display:block;text-align:left;cursor:pointer}button.team-card:hover{filter:brightness(.97)}#team-recording-details{margin-top:14px}#team-recording-details td:nth-child(7){white-space:pre-wrap;min-width:220px;max-width:400px}#team-recording-details td button{margin-right:5px}
