@@ -33,7 +33,7 @@ async function appAccessGuard(request,env){
  try{
   const access=await accountAccess(session,env);
   if(access?.role==='agent'&&!(new URL(request.url).pathname==='/api/payslips'&&new URL(request.url).searchParams.get('preferences')==='profile'))return json({error:'Use your personal agent workspace.'},403);
-  if(!access||(!required.includes('superadmin')&&required.length&&!required.some(key=>access.permissions.includes(key)))||(required.includes('superadmin')&&access.role!=='superadmin'))return json({error:'Your account does not have access to this feature. Contact the Super Admin.'},403);
+  if(!access||(!required.includes('superadmin')&&required.length&&!required.some(key=>access.permissions.includes(key)))||(required.includes('superadmin')&&access.role!=='superadmin'))return json({error:'Your account does not have access to this feature. Contact the Administrator.'},403);
   if(required.some(key=>['edit_notes','share_reviews'].includes(key))&&!access.permissions.some(key=>['recordings','reports','team'].includes(key)))return json({error:'Call review access is required.'},403);
   return null;
  }catch{return json({error:'User access could not be verified. Contact the server administrator.'},503);}
