@@ -43,3 +43,9 @@ Access is stored at `storage/access/users.json` relative to the service working 
 A Workers deployment must explicitly set `SUPER_ADMIN` and provide an `APP_ACCESS` service binding implementing `access-storage.mjs`'s trusted service interface. Do not expose that private service on a public route. The app supplies trusted `X-Actor` and `X-Super-Admin` headers from its verified session and server configuration, never from incoming client headers. The Spiff service accepts `X-App-Spiff-Access` only from this internal interface; the public Worker overwrites it after verifying app access.
 
 Run `node access-test.mjs` after `npm run build` for focused checks: owner bootstrap, disabled/unlisted login denial, per-user routes, session revocation, no escalation, persistence, audit, concurrent writes, and storage failures.
+
+## Active ViciDial user picker
+
+Opening User access loads the active account directory from `/vicidial/admin.php?ADD=0A`, using the signed-in Super Admin’s ViciDial credentials. The endpoint is Super Admin only. It reads the explicit ACTIVE column, includes only Y, and excludes the configured owner. All account levels can be selected; granting app access does not bypass upstream account permissions or the separate Spiff level check. Active means enabled, not currently logged in.
+
+Search by name or username, select a user, choose permissions and Save access. Existing app users open in edit mode. Refresh ViciDial users reloads the directory; New user resets to a fresh entry, clears the selection and search, and focuses the username field with visible feedback. Manual usernames remain available when the directory cannot be read. Loading or selecting a directory user does not grant access automatically.

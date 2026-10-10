@@ -13,6 +13,17 @@ try{
  seed('admin','jAsOnS');seed('viewer','Reader');seed('other','Other');
  assert.equal((await send('/api/access','admin')).status,200);
  assert.equal((await send('/api/access','viewer')).status,403);
+ assert.equal((await send('/api/access?directory=1','viewer')).status,403,'directory is Super Admin only');
+ assert.equal((await send('/api/access?directory=1','')).status,401);
+ const activeHtml='<table><tr><th>USER</th><th>FULL NAME</th><th>LEVEL</th><th>ACTIVE</th></tr><tr><td><a href="admin.php?ADD=3&amp;user=JasonS">JasonS</a></td><td>Jason</td><td>8</td><td>Y</td></tr><tr><td><a href="admin.php?ADD=3&amp;user=reader">reader</a></td><td>Active reader</td><td>1</td><td>Y</td></tr><tr><td><a href="admin.php?ADD=3&amp;user=inactive">inactive</a></td><td>Disabled reader</td><td>8</td><td>N</td></tr></table>';
+ const oldFetch=c.fetch;c.fetch=async url=>{const parsed=new URL(url);assert.equal(parsed.pathname,'/vicidial/admin.php');assert.equal(parsed.searchParams.get('ADD'),'0A');assert.equal(parsed.searchParams.has('status'),false);return new Response(activeHtml);};
+ const directoryResponse=await send('/api/access?directory=1','admin');assert.equal(directoryResponse.status,200);const listed=(await directoryResponse.json()).users;assert.deepEqual(listed.map(user=>user.username),['reader']);assert.equal(listed[0].level,1,'directory includes regular account levels');
+ assert.deepEqual(Array.from(c.spiffDirectory(activeHtml,true),user=>user.username),['JasonS','reader']);
+ assert.throws(()=>c.spiffDirectory(activeHtml.replace('<th>ACTIVE</th>','<th>UNKNOWN</th>'),true),/Active status/);
+ assert.throws(()=>c.spiffDirectory(activeHtml.replace('<td>Y</td>','<td>unknown</td>'),true),/active status/);
+ assert.equal(c.spiffDirectory(activeHtml.replaceAll('<td>Y</td>','<td>N</td>'),true).length,0,'valid empty active list');
+ c.fetch=async()=>new Response('Denied',{status:403});assert.equal((await send('/api/access?directory=1','admin')).status,401);
+ c.fetch=oldFetch;
  assert.equal((await send('/api/access','', 'POST',{})).status,401);
  assert.equal((await login('unknown')).status,403,'unlisted ViciDial account cannot sign in');
  const adminLogin=await login('JasonS');assert.equal(adminLogin.status,200);assert.equal((await adminLogin.json()).role,'superadmin');

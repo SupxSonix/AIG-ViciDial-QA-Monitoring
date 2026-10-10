@@ -1,9 +1,9 @@
 const ACCESS_SECTIONS=[['recordings','Recordings',''],['live','Live agents','live'],['payroll','Payroll','payroll'],['activity','Agent activity','activity'],['reports','Reports','reports'],['team','Team QA','team'],['spiffs','Spiffs','spiffs']];
 const ACCESS_ACTIONS=[['edit_notes','Edit QA notes'],['share_reviews','Create manager review links']];
-let accountPermissions=null,accountRole='legacy',accessUsers=[],accessOwner='';
+let accountPermissions=null,accountRole='legacy',accessUsers=[],accessOwner='',accessDirectory=[],accessDirectorySequence=0;
 function appCan(key){return accountPermissions===null||accountPermissions.includes(key);}
 function applyAccountAccess(data){accountPermissions=Array.isArray(data.permissions)?data.permissions:null;accountRole=data.role||'legacy';}
-function clearAccountAccess(){accountPermissions=[];accountRole='regular';accessUsers=[];accessOwner='';const dialog=$('user-access-dialog');if(dialog?.open)dialog.close();$('access-users')?.replaceChildren();if($('access-username'))$('access-username').value='';if($('open-user-access'))$('open-user-access').hidden=true;}
+function clearAccountAccess(){accountPermissions=[];accountRole='regular';accessUsers=[];accessOwner='';accessDirectory=[];accessDirectorySequence++;$('access-picker')?.replaceChildren();const dialog=$('user-access-dialog');if(dialog?.open)dialog.close();$('access-users')?.replaceChildren();if($('access-username'))$('access-username').value='';if($('open-user-access'))$('open-user-access').hidden=true;}
 function applyAccessLanding(){
  const ids={recordings:'nav-recordings',live:'open-live',payroll:'open-payroll',activity:'open-activity',reports:'open-reports',team:'open-team',spiffs:'open-spiffs'};
  for(const [key] of ACCESS_SECTIONS)$(ids[key]).hidden=!appCan(key);
@@ -31,7 +31,24 @@ function resetAccessEditor(user=null){
  $('access-enabled').checked=user?.enabled??true;
  for(const input of $('access-permissions').querySelectorAll('input'))input.checked=(user?.permissions||['recordings']).includes(input.value);
  $('access-editor-title').textContent=user?'Edit user access':'Add a regular user';
+ $('access-picker').value=accessDirectory.some(item=>item.username.toLowerCase()===user?.username.toLowerCase())?accessDirectory.find(item=>item.username.toLowerCase()===user.username.toLowerCase()).username:'';
 }
+function renderAccessDirectory(){
+ const picker=$('access-picker'),selected=picker.value,query=$('access-user-search').value.trim().toLowerCase();picker.replaceChildren(new Option('Choose an active ViciDial user…',''));
+ for(const user of accessDirectory.filter(user=>[user.username,user.name].some(value=>value.toLowerCase().includes(query))))picker.append(new Option(user.name+' ('+user.username+')',user.username));
+ if([...picker.options].some(option=>option.value===selected))picker.value=selected;
+ picker.disabled=!accessDirectory.length;
+}
+async function loadAccessDirectory(){
+ const sequence=++accessDirectorySequence;$('access-directory-load').disabled=true;$('access-directory-status').textContent='Loading active ViciDial users…';
+ try{
+  const response=await fetch('/api/access?directory=1'),data=await response.json();if(sequence!==accessDirectorySequence||accountRole!=='superadmin')return;
+  if(!response.ok)throw Error(data.error);accessDirectory=data.users;renderAccessDirectory();
+  $('access-directory-status').textContent=accessDirectory.length+' active accounts loaded. Choose a user, then set permissions and save.';
+ }catch(error){if(sequence===accessDirectorySequence)$('access-directory-status').textContent=error.message;}
+ finally{if(sequence===accessDirectorySequence)$('access-directory-load').disabled=false;}
+}
+function newAccessUser(){resetAccessEditor();$('access-user-search').value='';renderAccessDirectory();$('access-status').textContent='New user entry ready. Choose a ViciDial user or enter a username below.';$('access-form').scrollIntoView({behavior:'smooth',block:'nearest'});$('access-username').focus();}
 function renderAccessUsers(){
  $('access-owner').textContent='Super Admin: '+accessOwner+' · Full access';
  const host=$('access-users');host.replaceChildren();
@@ -45,13 +62,16 @@ function renderAccessUsers(){
 }
 async function loadUserAccess(){
  $('account-menu').open=false;$('user-access-dialog').showModal();$('access-status').textContent='Loading user access…';$('access-save').disabled=true;
- try{const response=await fetch('/api/access'),data=await response.json();if(accountRole!=='superadmin')return;if(!response.ok)throw Error(data.error);accessUsers=data.users;accessOwner=data.superAdmin;renderAccessUsers();resetAccessEditor();$('access-status').textContent='';}
+ try{const response=await fetch('/api/access'),data=await response.json();if(accountRole!=='superadmin')return;if(!response.ok)throw Error(data.error);accessUsers=data.users;accessOwner=data.superAdmin;renderAccessUsers();resetAccessEditor();$('access-status').textContent='';loadAccessDirectory();}
  catch(error){$('access-status').textContent=error.message;}
  finally{$('access-save').disabled=false;}
 }
 $('open-user-access').onclick=loadUserAccess;
 $('close-user-access').onclick=()=>$('user-access-dialog').close();
-$('access-new').onclick=()=>resetAccessEditor();
+$('access-new').onclick=newAccessUser;
+$('access-directory-load').onclick=loadAccessDirectory;
+$('access-user-search').oninput=renderAccessDirectory;
+$('access-picker').onchange=()=>{const user=accessDirectory.find(user=>user.username===$('access-picker').value);if(!user)return;const saved=accessUsers.find(item=>item.username===user.username.toLowerCase());resetAccessEditor(saved);if(!saved){$('access-username').value=user.username;$('access-picker').value=user.username;}$('access-status').textContent=saved?'This user already has app access. Update the permissions below.':'Selected '+user.name+'. Choose permissions, then save access.';};
 for(const [key,label] of [...ACCESS_SECTIONS,...ACCESS_ACTIONS]){
  const item=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=key;
  item.append(input,document.createTextNode(label));$('access-permissions').append(item);

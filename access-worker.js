@@ -42,6 +42,14 @@ async function accessEndpoint(request,env){
  const session=getSession(request);if(!session)return json({error:'Sign in first.'},401);
  if(session.username.toLowerCase()!==env.SUPER_ADMIN.trim().toLowerCase())return json({error:'Super Admin access required.'},403);
  if(!['GET','POST'].includes(request.method))return json({error:'Method not allowed.'},405);
+ if(request.method==='GET'&&new URL(request.url).searchParams.get('directory')==='1'){
+  try{
+   const result=await upstream('/vicidial/admin.php?ADD=0A',session.auth,'text/html');
+   if(result.error)return json({error:'ViciDial did not allow access to the active Users list. You can still enter a username manually.'},result.error.status);
+   const users=spiffDirectory(await readLimited(result.response,3000000),true).filter(user=>user.username.toLowerCase()!==env.SUPER_ADMIN.trim().toLowerCase());
+   return json({users:users.sort((a,b)=>a.name.localeCompare(b.name))});
+  }catch{return json({error:'Could not read active users from ViciDial. You can still enter a username manually.'},502);}
+ }
  if(request.method==='POST'&&!(request.headers.get('Content-Type')||'').startsWith('application/json'))return json({error:'Send JSON.'},415);
  const raw=request.method==='POST'?await request.text():undefined;
  if(raw&&raw.length>6000)return json({error:'Access request is too large.'},413);
