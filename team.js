@@ -1,7 +1,7 @@
 let teamSnapshots=[],teamDetailFilter=null;
 let teamRoster=[],teamRosterKey='',teamSummary=null,teamRequest=null,teamGeneration=0,teamDownloadUrl='';
 $('team-start').value=$('date').value;$('team-end').value=$('date').value;
-$('open-team').href=viewerBase+'team?'+viewerQuery;
+$('open-team').href=viewerBase+'team';
 function clearTeamSummary(){teamSnapshots=[];teamDetailFilter=null;$('team-recording-details').hidden=true;teamSummary=null;$('team-summary-results').hidden=true;$('team-export').disabled=true;if(teamDownloadUrl)URL.revokeObjectURL(teamDownloadUrl);teamDownloadUrl='';}
 function resetTeamPage(){teamGeneration++;teamRequest?.abort();teamRequest=null;teamRoster=[];teamRosterKey='';clearTeamSummary();$('team-agent-list').replaceChildren();$('team-status').textContent='';teamBusy(false);}
 function teamBusy(busy){for(const id of ['team-start','team-end','team-roster-load','team-select-all','team-clear','team-generate','team-format'])$(id).disabled=busy||id==='team-generate'&&!teamRoster.length;for(const input of $('team-agent-list').querySelectorAll('input'))input.disabled=busy;$('team-export').disabled=busy||!teamSummary;$('team-cancel').hidden=!busy;}
