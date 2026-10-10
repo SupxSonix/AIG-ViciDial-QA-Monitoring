@@ -34,8 +34,8 @@ try{
  assert.equal((await send('/api/session','viewer')).status,401,'permission changes revoke sessions');seed('viewer','Reader');
  const session=await (await send('/api/session','viewer')).json();assert.equal(session.role,'regular');assert.deepEqual(session.permissions,['recordings']);
  const before=upstreamCalls;
- for(const path of ['/api/access','/api/activity?u=test&q=2026-10-10','/api/payslips','/api/live','/api/webphone','/api/spiffs','/api/review-links/responses'])assert.equal((await send(path,'viewer')).status,403,path);
- for(const path of ['/api/notes','/api/monitor','/api/review-links','/api/review-links/revoke'])assert.equal((await send(path,'viewer','POST',{})).status,403,path);
+ for(const path of ['/api/access','/api/activity?u=test&q=2026-10-10','/api/payslips','/api/live','/api/webphone','/api/spiffs','/api/review-links/responses','/api/review-links/activity'])assert.equal((await send(path,'viewer')).status,403,path);
+ for(const path of ['/api/notes','/api/monitor','/api/review-links','/api/review-links/revoke','/api/review-links/activity'])assert.equal((await send(path,'viewer','POST',{})).status,403,path);
  assert.equal(upstreamCalls,before,'blocked API calls never reach ViciDial');
  c.parseRecordings=async()=>({recordings:[]});
  assert.equal((await send('/api/recordings?u=test&q=2026-10-10','viewer')).status,200,'allowed recordings still work');
@@ -57,7 +57,7 @@ try{
   assert.equal((await send('/api/notes','matrix','POST',{})).status,403,permission+' does not imply QA editing');
  }
  await send('/api/access','admin','POST',{username:'matrix',enabled:true,permissions:['team','edit_notes','share_reviews']});seed('matrix','matrix');
- for(const path of ['/api/notes','/api/review-links','/api/review-links/responses','/api/review-links/revoke'])assert.equal(await c.appAccessGuard(new Request('https://test.invalid'+path,{headers:{Cookie:'vici_qa_session=matrix'}}),env),null,'explicit QA action grants '+path);
+ for(const path of ['/api/notes','/api/review-links','/api/review-links/responses','/api/review-links/revoke','/api/review-links/activity'])assert.equal(await c.appAccessGuard(new Request('https://test.invalid'+path,{headers:{Cookie:'vici_qa_session=matrix'}}),env),null,'explicit QA action grants '+path);
  assert.equal((await c.worker.fetch(new Request('https://test.invalid/api/access',{headers:{Cookie:'vici_qa_session=matrix','X-Super-Admin':'matrix','X-App-Spiff-Access':'granted'}}),env)).status,403,'client headers cannot escalate roles');
  const broken={SUPER_ADMIN:'JasonS',APP_ACCESS:{fetch:async()=>{throw Error('offline');}}};seed('offline','Reader');assert.equal((await c.worker.fetch(new Request('https://test.invalid/api/audio?path=/RECORDINGS/MP3/test.mp3',{headers:{Cookie:'vici_qa_session=offline'}}),broken)).status,503,'fail closed on storage failure');
  const missing={SUPER_ADMIN:'JasonS'};assert.equal((await c.worker.fetch(new Request('https://test.invalid/api/session',{headers:{Cookie:'vici_qa_session=admin'}}),missing)).status,503);

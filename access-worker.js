@@ -23,7 +23,7 @@ function requiredAppPermissions(url){
  if(['/api/live','/api/monitor','/api/webphone'].includes(path))return ['live'];
  if(path==='/api/activity')return ['activity','payroll'];
  if(path==='/api/spiffs')return ['spiffs'];
- if(path==='/api/review-links'||['/api/review-links/responses','/api/review-links/revoke'].includes(path))return ['share_reviews'];
+ if(path==='/api/review-links'||['/api/review-links/responses','/api/review-links/revoke','/api/review-links/activity'].includes(path))return ['share_reviews'];
  return null;
 }
 async function appAccessGuard(request,env){
