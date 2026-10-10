@@ -1,4 +1,4 @@
-const APP_PERMISSIONS=['recordings','live','payroll','activity','reports','team','spiffs','edit_notes','share_reviews'];
+const APP_PERMISSIONS=['recordings','live','payroll','activity','reports','team','spiffs','edit_notes','share_reviews','own_transfers','own_payslips','own_spiffs'];
 function accessEnabled(env){return !!env?.SUPER_ADMIN;}
 async function accountAccess(session,env){
  if(!accessEnabled(env))return {role:'legacy',permissions:[...APP_PERMISSIONS]};
@@ -11,7 +11,7 @@ async function accountAccess(session,env){
  const {user}=await response.json();
  if(!user?.enabled)return null;
  if(!Array.isArray(user.permissions)||!user.permissions.every(key=>APP_PERMISSIONS.includes(key)))throw Error('Invalid user access.');
- return {role:'regular',permissions:user.permissions};
+ const role=user.role||'regular';if(!['regular','agent'].includes(role)||!user.permissions.every(key=>(role==='agent'?AGENT_PERMISSIONS:APP_PERMISSIONS.slice(0,9)).includes(key)))throw Error('Invalid role permissions.');return {role,permissions:user.permissions};
 }
 function requiredAppPermissions(url){
  const path=url.pathname;
@@ -32,6 +32,7 @@ async function appAccessGuard(request,env){
  const session=getSession(request);if(!session)return json({error:'Sign in to use this section.'},401);
  try{
   const access=await accountAccess(session,env);
+  if(access?.role==='agent'&&!(new URL(request.url).pathname==='/api/payslips'&&new URL(request.url).searchParams.get('preferences')==='profile'))return json({error:'Use your personal agent workspace.'},403);
   if(!access||(!required.includes('superadmin')&&required.length&&!required.some(key=>access.permissions.includes(key)))||(required.includes('superadmin')&&access.role!=='superadmin'))return json({error:'Your account does not have access to this feature. Contact the Super Admin.'},403);
   if(required.some(key=>['edit_notes','share_reviews'].includes(key))&&!access.permissions.some(key=>['recordings','reports','team'].includes(key)))return json({error:'Call review access is required.'},403);
   return null;

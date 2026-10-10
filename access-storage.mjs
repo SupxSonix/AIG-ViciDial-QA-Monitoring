@@ -2,7 +2,7 @@ import {mkdir,readFile,writeFile,rename} from 'node:fs/promises';
 import {join} from 'node:path';
 import {randomUUID} from 'node:crypto';
 
-const permissions=['recordings','live','payroll','activity','reports','team','spiffs','edit_notes','share_reviews'];
+const permissions=['recordings','live','payroll','activity','reports','team','spiffs','edit_notes','share_reviews','own_transfers','own_payslips','own_spiffs'];
 export function createAccessService(directory,ResponseType=Response){
  let writes=Promise.resolve();
  const path=join(directory,'users.json');
@@ -38,13 +38,14 @@ export function createAccessService(directory,ResponseType=Response){
    }
    if(data.action&&data.action!=='save')return reply({error:'Unknown user access action.'},400);
    if(!/^[a-z0-9_.-]{1,64}$/.test(username)||username===owner||typeof data.enabled!=='boolean'||!Array.isArray(data.permissions)||data.permissions.length>permissions.length||new Set(data.permissions).size!==data.permissions.length||!data.permissions.every(value=>permissions.includes(value)))return reply({error:'Invalid user or permissions. The Super Admin account cannot be changed here.'},400);
+   const role=data.role||'regular';if(!['regular','agent'].includes(role))return reply({error:'Invalid app role.'},400);const allowed=role==='agent'?['own_transfers','own_payslips','own_spiffs']:permissions.slice(0,9);if(!data.permissions.every(key=>allowed.includes(key)))return reply({error:'Permissions do not match the selected role.'},400);
    const viewers=['recordings','reports','team'];
-   if(data.enabled&&!data.permissions.some(value=>permissions.slice(0,7).includes(value)))return reply({error:'Select at least one section for an enabled user.'},400);
+   if(data.enabled&&!data.permissions.some(value=>(role==='agent'?allowed:permissions.slice(0,7)).includes(value)))return reply({error:'Select at least one section for an enabled user.'},400);
    if(data.permissions.some(value=>['edit_notes','share_reviews'].includes(value))&&!data.permissions.some(value=>viewers.includes(value)))return reply({error:'QA actions require Recordings, Reports, or Team QA access.'},400);
    const task=writes.catch(()=>{}).then(async()=>{
     const state=await load(),index=state.users.findIndex(user=>user.username===username);
     if(index<0&&state.users.length>=500)throw Error('User limit reached.');
-    const before=index<0?null:state.users[index],user={username,enabled:data.enabled,permissions:[...data.permissions],updatedAt:new Date().toISOString(),updatedBy:actor};
+    const before=index<0?null:state.users[index],user={username,role,enabled:data.enabled,permissions:[...data.permissions],updatedAt:new Date().toISOString(),updatedBy:actor};
     if(index<0)state.users.push(user);else state.users[index]=user;
     state.audit.push({id:randomUUID(),at:user.updatedAt,actor,username,before,after:user});
     await mkdir(directory,{recursive:true,mode:0o700});const temporary=path+'.'+randomUUID()+'.tmp';

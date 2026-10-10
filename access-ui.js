@@ -5,6 +5,7 @@ function appCan(key){return accountPermissions===null||accountPermissions.includ
 function applyAccountAccess(data){accountPermissions=Array.isArray(data.permissions)?data.permissions:null;accountRole=data.role||'legacy';}
 function clearAccountAccess(){accountPermissions=[];accountRole='regular';accessUsers=[];accessOwner='';accessDirectory=[];accessDirectorySequence++;$('access-history-list')?.replaceChildren();if($('access-history'))$('access-history').open=false;if($('access-list-search'))$('access-list-search').value='';if($('access-list-status'))$('access-list-status').value='all';$('access-picker')?.replaceChildren();const dialog=$('user-access-dialog');if(dialog?.open)dialog.close();$('access-users')?.replaceChildren();if($('access-username'))$('access-username').value='';if($('open-user-access'))$('open-user-access').hidden=true;}
 function applyAccessLanding(){
+ if(accountRole==='agent'){for(const [key]of ACCESS_SECTIONS)$( {recordings:'nav-recordings',live:'open-live',payroll:'open-payroll',activity:'open-activity',reports:'open-reports',team:'open-team',spiffs:'open-spiffs'}[key]).hidden=true;$('open-user-access').hidden=true;$('account-role').textContent='Agent · Read only';if(!/\/agent\/?$/.test(location.pathname)){location.replace(viewerBase+'agent');return false;}return true;}if(/\/agent\/?$/.test(location.pathname)){location.replace(viewerBase);return false;}
  const ids={recordings:'nav-recordings',live:'open-live',payroll:'open-payroll',activity:'open-activity',reports:'open-reports',team:'open-team',spiffs:'open-spiffs'};
  for(const [key] of ACCESS_SECTIONS)$(ids[key]).hidden=!appCan(key);
  $('open-user-access').hidden=accountRole!=='superadmin';$('account-role').textContent=accountRole==='superadmin'?'Super Admin':accountRole==='regular'?'Regular user':'';
@@ -28,9 +29,9 @@ function applyNoteAccess(){
 }
 function resetAccessEditor(user=null){
  $('access-username').value=user?.username||'';$('access-username').readOnly=!!user;
- $('access-enabled').checked=user?.enabled??true;
+ $('access-enabled').checked=user?.enabled??true;$('access-role-select').value=user?.role||'regular';
  for(const input of $('access-permissions').querySelectorAll('input'))input.checked=(user?.permissions||['recordings']).includes(input.value);
- $('access-editor-title').textContent=user?'Edit user access':'Add a regular user';
+ syncAccessRole();$('access-editor-title').textContent=user?'Edit user access':'Add a user';
  $('access-picker').value=accessDirectory.some(item=>item.username.toLowerCase()===user?.username.toLowerCase())?accessDirectory.find(item=>item.username.toLowerCase()===user.username.toLowerCase()).username:'';
 }
 function renderAccessDirectory(){
@@ -57,8 +58,8 @@ function renderAccessUsers(){
  $('access-list-count').textContent=visible.length+' shown · '+accessUsers.length+' app users';
  for(const user of visible.sort((a,b)=>a.username.localeCompare(b.username))){
   const row=document.createElement('tr');
-  const names=[...ACCESS_SECTIONS,...ACCESS_ACTIONS];
-  for(const value of [user.username,user.enabled?'Enabled':'Disabled',user.permissions.map(key=>names.find(item=>item[0]===key)?.[1]||key).join(', ')||'No sections']){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
+  const names=[...ACCESS_SECTIONS,...ACCESS_ACTIONS,['own_transfers','Own invalid transfers'],['own_payslips','Own published payslips'],['own_spiffs','Own weekly Spiffs']];
+  for(const value of [user.username+(user.role==='agent'?' · Agent':''),user.enabled?'Enabled':'Disabled',user.permissions.map(key=>names.find(item=>item[0]===key)?.[1]||key).join(', ')||'No sections']){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
   const cell=document.createElement('td');cell.className='access-row-actions';
   for(const [label,action] of [['Edit access',()=>resetAccessEditor(user)],[user.enabled?'Disable':'Enable',()=>changeAccessUser(user,false)],['Remove',()=>changeAccessUser(user,true)]]){const button=document.createElement('button');button.type='button';button.textContent=label;button.setAttribute('aria-label',label+' for '+user.username);if(label==='Remove')button.className='access-remove';button.onclick=action;cell.append(button);}
   row.append(cell);host.append(row);
@@ -70,7 +71,7 @@ async function changeAccessUser(user,remove){
  const buttons=[...$('access-users').querySelectorAll('button')];for(const button of buttons)button.disabled=true;
  $('access-status').textContent=remove?'Removing app access…':'Updating app access…';
  try{
-  const body=remove?{action:'remove',username:user.username}:{username:user.username,enabled:!user.enabled,permissions:user.permissions};
+  const body=remove?{action:'remove',username:user.username}:{username:user.username,enabled:!user.enabled,permissions:user.permissions,role:user.role||'regular'};
   const response=await fetch('/api/access',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),data=await response.json();
   if(accountRole!=='superadmin')return;if(!response.ok)throw Error(data.error);
   accessUsers=data.users;accessOwner=data.superAdmin;renderAccessUsers();resetAccessEditor();
@@ -101,15 +102,18 @@ $('access-history').ontoggle=()=>{if($('access-history').open)loadAccessHistory(
 $('access-directory-load').onclick=loadAccessDirectory;
 $('access-user-search').oninput=renderAccessDirectory;
 $('access-picker').onchange=()=>{const user=accessDirectory.find(user=>user.username===$('access-picker').value);if(!user)return;const saved=accessUsers.find(item=>item.username===user.username.toLowerCase());resetAccessEditor(saved);if(!saved){$('access-username').value=user.username;$('access-picker').value=user.username;}$('access-status').textContent=saved?'This user already has app access. Update the permissions below.':'Selected '+user.name+'. Choose permissions, then save access.';};
-for(const [key,label] of [...ACCESS_SECTIONS,...ACCESS_ACTIONS]){
+for(const [key,label] of [...ACCESS_SECTIONS,...ACCESS_ACTIONS,['own_transfers','Own invalid transfers'],['own_payslips','Own published payslips'],['own_spiffs','Own weekly Spiffs']]){
  const item=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.value=key;
  item.append(input,document.createTextNode(label));$('access-permissions').append(item);
 }
 $('access-form').onsubmit=async event=>{
  event.preventDefault();$('access-save').disabled=true;$('access-status').textContent='Saving user access…';
  try{
-  const response=await fetch('/api/access',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('access-username').value,enabled:$('access-enabled').checked,permissions:[...$('access-permissions').querySelectorAll('input:checked')].map(input=>input.value)})});
+  const response=await fetch('/api/access',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('access-username').value,enabled:$('access-enabled').checked,role:$('access-role-select').value,permissions:[...$('access-permissions').querySelectorAll('input:checked')].map(input=>input.value)})});
   const data=await response.json();if(!response.ok)throw Error(data.error);accessUsers=data.users;accessOwner=data.superAdmin;renderAccessUsers();resetAccessEditor();$('access-status').textContent='Access saved. The user must sign in again to use their updated permissions.';if($('access-history').open)loadAccessHistory();
  }catch(error){$('access-status').textContent=error.message;}
  finally{$('access-save').disabled=false;}
 };
+
+function syncAccessRole(){const agent=$('access-role-select').value==='agent';$('access-role-hint').textContent=agent?'Agents can view only their own invalid transfers, published payslips and saved weekly Spiffs. All access is read-only.':'Supervisor Spiffs includes rules, calculations, eligibility and payment records. ViciDial level 7–9 is still required.';for(const input of $('access-permissions').querySelectorAll('input')){const allowed=input.value.startsWith('own_')===agent;input.parentElement.hidden=!allowed;if(!allowed)input.checked=false;}}
+$('access-role-select').onchange=()=>{syncAccessRole();const defaults=$('access-role-select').value==='agent'?['own_transfers','own_payslips','own_spiffs']:['recordings'];for(const input of $('access-permissions').querySelectorAll('input'))input.checked=defaults.includes(input.value);};

@@ -55,3 +55,22 @@ Search by name or username, select a user, choose permissions and Save access. E
 App users can be searched by username or the loaded ViciDial name and filtered by enabled/disabled status. Disable retains their assigned permissions but denies login and revokes current sessions. Enable restores those permissions. Remove requires a confirmation, removes only the app access entry, and revokes sessions. It never deletes or modifies the ViciDial account, payroll snapshots, QA notes, review history or other saved data. Removed users can be added again through the existing picker or manual username entry. The configured Super Admin cannot be removed or disabled.
 
 Access history is visible only to Super Admin and shows the latest 100 additions, updates, enable/disable changes and removals, with actor, time and before/after permissions. All audit events remain in private server storage after removal and restart.
+## Agent workspace
+
+In Profile → User access, choose an active ViciDial user, set **App role: Agent**, and select their own-data permissions. Agent accounts cannot receive supervisor sections or QA editing permissions. Existing regular users retain their current role and permissions. Changing roles or permissions signs out their sessions.
+
+Agents sign in with their existing ViciDial credentials and are sent to `/agent`. The app validates active level 1+ credentials using ViciDial's `agc/conf_exten_check.php`, with no phone/session parameters. ViciDial authenticates before reporting the missing parameters and exits before phone actions. Only the exact successful English missing-parameter response is accepted. Modified/localized upstream pages fail closed. Invalid upstream authentication details are never returned to the browser or logged by this app.
+
+* **Own invalid transfers:** the server selects the logged-in username, filters XFER records to QA Invalid, and verifies each audio request against that agent's current invalid list. Valid, pending and other agents' recordings are excluded. Agents cannot edit QA notes or create review links.
+* **Own published payslips:** supervisors first save a payslip, then click **Publish to agent** in Saved payslips. Its stored agent username is the recipient; callers cannot select a different recipient. Unpublished saves remain private. Publishing is idempotent. Deleting a saved payslip withdraws its published copy and retains recoverable files in storage. Previously saved payslips can be published without regenerating them.
+* **Own weekly Spiffs:** agents see only their row from saved weekly calculations, including daily rewards, eligibility, payment totals and balance. Level 7–9 supervisor verification remains required for management; the personal read-only endpoint supports level 1 agents. It never returns other agents, admin access lists, rule winners, audit logs or payment references.
+
+The agent endpoints require a current enabled Agent role and explicit permission on every request. They accept GET only. Existing supervisor APIs are denied to agents, even for their own username. Profile settings remain available.
+
+### Invalid-transfer report connection
+
+For invalid transfers, ViciDial's supervisor report must be fetched server-side through an authorized report account. By default the app uses the Super Admin's unexpired in-memory session. If the Super Admin has signed out, agents can still view published payslips and saved Spiffs, but invalid transfers show a connection-unavailable message.
+
+For continuous report access, optionally configure `AGENT_REPORT_USER` and `AGENT_REPORT_PASS` in the service environment (`/etc/vicidial-qa.env`) and restart. Use an existing account authorized to read the QA recording report and audio. These credentials stay server-side and are never given to agents. Do not place them in the repository. No ViciDial server file installation is required. The app derives the destination from `VICIDIAL_ORIGIN`.
+
+Run `node agent-portal-test.mjs` after building for ownership, read-only, login, publication, Spiff projection and session-revocation checks. A real level 1 account should also be tested against the installation's ViciDial login page, since upstream customizations cannot be validated by fixtures.
