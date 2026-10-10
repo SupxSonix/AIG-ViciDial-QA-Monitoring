@@ -11,4 +11,4 @@ const css=readFileSync('style.css','utf8');
 const scriptHash=createHash('sha256').update(js).digest('base64');
 const page=html.replace('/* APP_STYLE */',css).replace('/* APP_SCRIPT */',()=>js);
 writeFileSync('dist/server/index.js',`const ERROR_PAGE=${JSON.stringify(errorPage)};\nconst ERROR_HASH=${JSON.stringify(errorHash)};\nconst REVIEW_PAGE=${JSON.stringify(reviewPage)};\nconst REVIEW_HASH=${JSON.stringify(reviewHash)};\nconst SCRIPT_HASH=${JSON.stringify(scriptHash)};\nconst PAGE=${JSON.stringify(page)};\n`+readFileSync('spiff-utils.mjs','utf8').replace(/^export /gm,'')+'\n'+readFileSync('access-worker.js','utf8')+'\n'+readFileSync('agent-worker.js','utf8')+'\n'+readFileSync('error-worker.js','utf8')+'\n'+readFileSync('worker.js','utf8'));
-console.log('Built recording viewer: '+Buffer.byteLength(page)+' bytes, one audio player.');
+console.log('Built recording viewer: '+Buffer.byteLength(page)+' bytes, shared players with on-demand audio.');
