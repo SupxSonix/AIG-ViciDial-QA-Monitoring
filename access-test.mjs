@@ -65,5 +65,14 @@ try{
  // Concurrent writes retain both users and append audit entries.
  await Promise.all(['one','two'].map(username=>send('/api/access','admin','POST',{username,enabled:true,permissions:['recordings']})));
  const users=(await (await send('/api/access','admin')).json()).users;assert.ok(users.some(user=>user.username==='one')&&users.some(user=>user.username==='two'));
+ assert.equal((await send('/api/access?history=1','matrix')).status,403,'history is Super Admin only');
+ assert.equal((await send('/api/access','matrix','POST',{action:'remove',username:'one'})).status,403,'regular users cannot remove users');
+ assert.equal((await send('/api/access','admin','POST',{action:'remove',username:'JasonS'})).status,400,'owner cannot be removed');
+ assert.equal((await send('/api/access','admin','POST',{action:'remove',username:'missing'})).status,404);
+ seed('removed','one');const beforeRemove=upstreamCalls;
+ const removed=await send('/api/access','admin','POST',{action:'remove',username:'ONE'});assert.equal(removed.status,200);assert.ok(!(await removed.json()).users.some(user=>user.username==='one'));assert.equal(upstreamCalls,beforeRemove,'removal never contacts ViciDial');
+ assert.equal((await send('/api/session','removed')).status,401,'removal revokes sessions');assert.equal((await login('one')).status,403);
+ service=createAccessService(directory);const history=await (await send('/api/access?history=1','admin')).json();const removal=history.audit.find(event=>event.username==='one'&&event.after===null);assert.ok(removal);assert.deepEqual(removal.before.permissions,['recordings']);assert.equal(removal.actor,'jasons');
+ assert.equal((await send('/api/access','admin','POST',{username:'one',enabled:true,permissions:['recordings']})).status,200,'removed accounts can be added back');assert.equal((await login('one')).status,200);
  console.log('PASS: Super Admin bootstrap, per-user permissions, unauthorized APIs, no self-escalation, login denial, case normalization, immediate session revocation, persistence, audit, serialized writes and storage fail-closed checks.');
 }finally{await rm(directory,{recursive:true,force:true});}

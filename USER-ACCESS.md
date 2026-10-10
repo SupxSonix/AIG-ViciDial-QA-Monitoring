@@ -49,3 +49,9 @@ Run `node access-test.mjs` after `npm run build` for focused checks: owner boots
 Opening User access loads the active account directory from `/vicidial/admin.php?ADD=0A`, using the signed-in Super Admin’s ViciDial credentials. The endpoint is Super Admin only. It reads the explicit ACTIVE column, includes only Y, and excludes the configured owner. All account levels can be selected; granting app access does not bypass upstream account permissions or the separate Spiff level check. Active means enabled, not currently logged in.
 
 Search by name or username, select a user, choose permissions and Save access. Existing app users open in edit mode. Refresh ViciDial users reloads the directory; New user resets to a fresh entry, clears the selection and search, and focuses the username field with visible feedback. Manual usernames remain available when the directory cannot be read. Loading or selecting a directory user does not grant access automatically.
+
+## Remove, disable, search and history
+
+App users can be searched by username or the loaded ViciDial name and filtered by enabled/disabled status. Disable retains their assigned permissions but denies login and revokes current sessions. Enable restores those permissions. Remove requires a confirmation, removes only the app access entry, and revokes sessions. It never deletes or modifies the ViciDial account, payroll snapshots, QA notes, review history or other saved data. Removed users can be added again through the existing picker or manual username entry. The configured Super Admin cannot be removed or disabled.
+
+Access history is visible only to Super Admin and shows the latest 100 additions, updates, enable/disable changes and removals, with actor, time and before/after permissions. All audit events remain in private server storage after removal and restart.

@@ -3,7 +3,7 @@ const ACCESS_ACTIONS=[['edit_notes','Edit QA notes'],['share_reviews','Create ma
 let accountPermissions=null,accountRole='legacy',accessUsers=[],accessOwner='',accessDirectory=[],accessDirectorySequence=0;
 function appCan(key){return accountPermissions===null||accountPermissions.includes(key);}
 function applyAccountAccess(data){accountPermissions=Array.isArray(data.permissions)?data.permissions:null;accountRole=data.role||'legacy';}
-function clearAccountAccess(){accountPermissions=[];accountRole='regular';accessUsers=[];accessOwner='';accessDirectory=[];accessDirectorySequence++;$('access-picker')?.replaceChildren();const dialog=$('user-access-dialog');if(dialog?.open)dialog.close();$('access-users')?.replaceChildren();if($('access-username'))$('access-username').value='';if($('open-user-access'))$('open-user-access').hidden=true;}
+function clearAccountAccess(){accountPermissions=[];accountRole='regular';accessUsers=[];accessOwner='';accessDirectory=[];accessDirectorySequence++;$('access-history-list')?.replaceChildren();if($('access-history'))$('access-history').open=false;if($('access-list-search'))$('access-list-search').value='';if($('access-list-status'))$('access-list-status').value='all';$('access-picker')?.replaceChildren();const dialog=$('user-access-dialog');if(dialog?.open)dialog.close();$('access-users')?.replaceChildren();if($('access-username'))$('access-username').value='';if($('open-user-access'))$('open-user-access').hidden=true;}
 function applyAccessLanding(){
  const ids={recordings:'nav-recordings',live:'open-live',payroll:'open-payroll',activity:'open-activity',reports:'open-reports',team:'open-team',spiffs:'open-spiffs'};
  for(const [key] of ACCESS_SECTIONS)$(ids[key]).hidden=!appCan(key);
@@ -43,7 +43,7 @@ async function loadAccessDirectory(){
  const sequence=++accessDirectorySequence;$('access-directory-load').disabled=true;$('access-directory-status').textContent='Loading active ViciDial users…';
  try{
   const response=await fetch('/api/access?directory=1'),data=await response.json();if(sequence!==accessDirectorySequence||accountRole!=='superadmin')return;
-  if(!response.ok)throw Error(data.error);accessDirectory=data.users;renderAccessDirectory();
+  if(!response.ok)throw Error(data.error);accessDirectory=data.users;renderAccessDirectory();renderAccessUsers();
   $('access-directory-status').textContent=accessDirectory.length+' active accounts loaded. Choose a user, then set permissions and save.';
  }catch(error){if(sequence===accessDirectorySequence)$('access-directory-status').textContent=error.message;}
  finally{if(sequence===accessDirectorySequence)$('access-directory-load').disabled=false;}
@@ -52,13 +52,39 @@ function newAccessUser(){resetAccessEditor();$('access-user-search').value='';re
 function renderAccessUsers(){
  $('access-owner').textContent='Super Admin: '+accessOwner+' · Full access';
  const host=$('access-users');host.replaceChildren();
- for(const user of [...accessUsers].sort((a,b)=>a.username.localeCompare(b.username))){
+ const query=$('access-list-search').value.trim().toLowerCase(),status=$('access-list-status').value;
+ const visible=accessUsers.filter(user=>(status==='all'||user.enabled===(status==='enabled'))&&[user.username,accessDirectory.find(item=>item.username.toLowerCase()===user.username)?.name||''].some(value=>value.toLowerCase().includes(query)));
+ $('access-list-count').textContent=visible.length+' shown · '+accessUsers.length+' app users';
+ for(const user of visible.sort((a,b)=>a.username.localeCompare(b.username))){
   const row=document.createElement('tr');
   const names=[...ACCESS_SECTIONS,...ACCESS_ACTIONS];
   for(const value of [user.username,user.enabled?'Enabled':'Disabled',user.permissions.map(key=>names.find(item=>item[0]===key)?.[1]||key).join(', ')||'No sections']){const cell=document.createElement('td');cell.textContent=value;row.append(cell);}
-  const cell=document.createElement('td'),edit=document.createElement('button');edit.type='button';edit.textContent='Edit access';edit.setAttribute('aria-label','Edit access for '+user.username);edit.onclick=()=>resetAccessEditor(user);cell.append(edit);row.append(cell);host.append(row);
+  const cell=document.createElement('td');cell.className='access-row-actions';
+  for(const [label,action] of [['Edit access',()=>resetAccessEditor(user)],[user.enabled?'Disable':'Enable',()=>changeAccessUser(user,false)],['Remove',()=>changeAccessUser(user,true)]]){const button=document.createElement('button');button.type='button';button.textContent=label;button.setAttribute('aria-label',label+' for '+user.username);if(label==='Remove')button.className='access-remove';button.onclick=action;cell.append(button);}
+  row.append(cell);host.append(row);
  }
- if(!accessUsers.length){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=4;cell.textContent='No regular users yet. Add an existing ViciDial username below.';row.append(cell);host.append(row);}
+ if(!visible.length){const row=document.createElement('tr'),cell=document.createElement('td');cell.colSpan=4;cell.textContent=accessUsers.length?'No app users match these filters.':'No regular users yet. Add an existing ViciDial username below.';row.append(cell);host.append(row);}
+}
+async function changeAccessUser(user,remove){
+ if(remove&&!confirm('Remove '+user.username+' from this app? Their current sessions will be signed out. Their ViciDial account and saved payroll/review data will remain. You can add their app access again later.'))return;
+ const buttons=[...$('access-users').querySelectorAll('button')];for(const button of buttons)button.disabled=true;
+ $('access-status').textContent=remove?'Removing app access…':'Updating app access…';
+ try{
+  const body=remove?{action:'remove',username:user.username}:{username:user.username,enabled:!user.enabled,permissions:user.permissions};
+  const response=await fetch('/api/access',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}),data=await response.json();
+  if(accountRole!=='superadmin')return;if(!response.ok)throw Error(data.error);
+  accessUsers=data.users;accessOwner=data.superAdmin;renderAccessUsers();resetAccessEditor();
+  $('access-status').textContent=remove?'User removed from app access. Their ViciDial account is unchanged.':user.enabled?'User disabled and signed out.':'User enabled. They can sign in again.';
+  if($('access-history').open)loadAccessHistory();
+ }catch(error){$('access-status').textContent=error.message;}
+ finally{for(const button of buttons)button.disabled=false;}
+}
+async function loadAccessHistory(){
+ $('access-history-list').replaceChildren();$('access-history-status').textContent='Loading access history…';
+ try{const response=await fetch('/api/access?history=1'),data=await response.json();if(accountRole!=='superadmin')return;if(!response.ok)throw Error(data.error);
+  for(const event of data.audit){const item=document.createElement('p'),action=!event.after?'Removed':!event.before?'Added':event.before.enabled!==event.after.enabled?event.after.enabled?'Enabled':'Disabled':'Permissions updated';item.textContent=new Date(event.at).toLocaleString()+' · '+event.actor+' · '+action+' '+event.username;const detail=document.createElement('small');detail.textContent='Before: '+(event.before?event.before.permissions.join(', ')||'No permissions':'No app access')+' → After: '+(event.after?event.after.permissions.join(', ')||'No permissions':'No app access');item.append(document.createElement('br'),detail);$('access-history-list').append(item);}
+  $('access-history-status').textContent=data.audit.length?'Latest '+data.audit.length+' changes. Full history is retained on the server.':'No access changes yet.';
+ }catch(error){$('access-history-status').textContent=error.message;}
 }
 async function loadUserAccess(){
  $('account-menu').open=false;$('user-access-dialog').showModal();$('access-status').textContent='Loading user access…';$('access-save').disabled=true;
@@ -69,6 +95,9 @@ async function loadUserAccess(){
 $('open-user-access').onclick=loadUserAccess;
 $('close-user-access').onclick=()=>$('user-access-dialog').close();
 $('access-new').onclick=newAccessUser;
+$('access-list-search').oninput=renderAccessUsers;
+$('access-list-status').onchange=renderAccessUsers;
+$('access-history').ontoggle=()=>{if($('access-history').open)loadAccessHistory();};
 $('access-directory-load').onclick=loadAccessDirectory;
 $('access-user-search').oninput=renderAccessDirectory;
 $('access-picker').onchange=()=>{const user=accessDirectory.find(user=>user.username===$('access-picker').value);if(!user)return;const saved=accessUsers.find(item=>item.username===user.username.toLowerCase());resetAccessEditor(saved);if(!saved){$('access-username').value=user.username;$('access-picker').value=user.username;}$('access-status').textContent=saved?'This user already has app access. Update the permissions below.':'Selected '+user.name+'. Choose permissions, then save access.';};
@@ -80,7 +109,7 @@ $('access-form').onsubmit=async event=>{
  event.preventDefault();$('access-save').disabled=true;$('access-status').textContent='Saving user access…';
  try{
   const response=await fetch('/api/access',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:$('access-username').value,enabled:$('access-enabled').checked,permissions:[...$('access-permissions').querySelectorAll('input:checked')].map(input=>input.value)})});
-  const data=await response.json();if(!response.ok)throw Error(data.error);accessUsers=data.users;accessOwner=data.superAdmin;renderAccessUsers();resetAccessEditor();$('access-status').textContent='Access saved. The user must sign in again to use their updated permissions.';
+  const data=await response.json();if(!response.ok)throw Error(data.error);accessUsers=data.users;accessOwner=data.superAdmin;renderAccessUsers();resetAccessEditor();$('access-status').textContent='Access saved. The user must sign in again to use their updated permissions.';if($('access-history').open)loadAccessHistory();
  }catch(error){$('access-status').textContent=error.message;}
  finally{$('access-save').disabled=false;}
 };

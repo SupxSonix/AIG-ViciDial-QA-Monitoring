@@ -17,12 +17,26 @@ export function createAccessService(directory,ResponseType=Response){
     await writes.catch(()=>{});const state=await load();
     if(lookup){if(actor!==owner&&lookup.toLowerCase()!==actor)return reply({error:'Access denied.'},403);return reply({user:state.users.find(user=>user.username===lookup.toLowerCase())||null});}
     if(actor!==owner)return reply({error:'Super Admin access required.'},403);
+    if(new URL(request.url).searchParams.get('history')==='1')return reply({audit:state.audit.slice(-100).reverse()});
     return reply({users:state.users,superAdmin:owner});
    }
    if(request.method!=='POST')return reply({error:'Method not allowed.'},405);
    if(actor!==owner)return reply({error:'Super Admin access required.'},403);
    const raw=await request.text();if(raw.length>6000)return reply({error:'Access request is too large.'},413);
    const data=JSON.parse(raw),username=typeof data.username==='string'?data.username.trim().toLowerCase():'';
+   if(data.action==='remove'){
+    if(!/^[a-z0-9_.-]{1,64}$/.test(username)||username===owner)return reply({error:'The Super Admin cannot be removed.'},400);
+    const task=writes.catch(()=>{}).then(async()=>{
+     const state=await load(),index=state.users.findIndex(user=>user.username===username);
+     if(index<0)return {missing:true};
+     const [before]=state.users.splice(index,1);
+     state.audit.push({id:randomUUID(),at:new Date().toISOString(),actor,username,before,after:null});
+     await mkdir(directory,{recursive:true,mode:0o700});const temporary=path+'.'+randomUUID()+'.tmp';
+     await writeFile(temporary,JSON.stringify(state),{mode:0o600});await rename(temporary,path);
+     return {users:state.users,superAdmin:owner};
+    });writes=task;const result=await task;return result.missing?reply({error:'This user is no longer in the app access list.'},404):reply(result);
+   }
+   if(data.action&&data.action!=='save')return reply({error:'Unknown user access action.'},400);
    if(!/^[a-z0-9_.-]{1,64}$/.test(username)||username===owner||typeof data.enabled!=='boolean'||!Array.isArray(data.permissions)||data.permissions.length>permissions.length||new Set(data.permissions).size!==data.permissions.length||!data.permissions.every(value=>permissions.includes(value)))return reply({error:'Invalid user or permissions. The Super Admin account cannot be changed here.'},400);
    const viewers=['recordings','reports','team'];
    if(data.enabled&&!data.permissions.some(value=>permissions.slice(0,7).includes(value)))return reply({error:'Select at least one section for an enabled user.'},400);

@@ -53,7 +53,8 @@ async function accessEndpoint(request,env){
  if(request.method==='POST'&&!(request.headers.get('Content-Type')||'').startsWith('application/json'))return json({error:'Send JSON.'},415);
  const raw=request.method==='POST'?await request.text():undefined;
  if(raw&&raw.length>6000)return json({error:'Access request is too large.'},413);
- const response=await env.APP_ACCESS.fetch('http://access/',{method:request.method,headers:{'X-Actor':session.username,'X-Super-Admin':env.SUPER_ADMIN.trim()},body:raw});
+ const history=request.method==='GET'&&new URL(request.url).searchParams.get('history')==='1';
+ const response=await env.APP_ACCESS.fetch('http://access/'+(history?'?history=1':''),{method:request.method,headers:{'X-Actor':session.username,'X-Super-Admin':env.SUPER_ADMIN.trim()},body:raw});
  const data=await response.json();
  if(response.ok&&request.method==='POST'){
   // Revoke existing sessions after any permission change. A new login uses the new access.
